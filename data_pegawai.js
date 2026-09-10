@@ -152,3 +152,73 @@ const dataPegawai = [
   { nama: "WAHYU WIDODO PRABOWO", unit: "Kelurahan Semolowaru", telp: "+62895616793696" },
   { nama: "MUNAWAROH", unit: "Kelurahan Semolowaru", telp: "+6281217823861" }
 ];
+
+// Guard khusus scanner: jangan kirim request Gemini baru sebelum request sebelumnya selesai.
+// Ini mencegah request menumpuk saat respons AI lebih lama dari interval scan.
+(function installGeminiScanGuard() {
+  const nativeSetInterval = window.setInterval.bind(window);
+  let scannerIntervalId = null;
+
+  window.setInterval = function(callback, delay, ...args) {
+    if (typeof callback === 'function' && callback.name === 'KirimKeGemini') {
+      let requestSedangBerjalan = false;
+
+      scannerIntervalId = nativeSetInterval(async () => {
+        if (requestSedangBerjalan) return;
+        requestSedangBerjalan = true;
+        try {
+          await callback(...args);
+        } finally {
+          requestSedangBerjalan = false;
+        }
+      }, delay);
+
+      return scannerIntervalId;
+    }
+
+    return nativeSetInterval(callback, delay, ...args);
+  };
+
+  // Ubah error HTTP Gemini menjadi response JSON yang bisa dibaca kode lama,
+  // lalu tampilkan status yang lebih informatif tanpa membeberkan secret.
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async function(input, init) {
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    const isGeminiFunction = url.includes('/.netlify/functions/gemini');
+
+    if (!isGeminiFunction) return nativeFetch(input, init);
+
+    const response = await nativeFetch(input, init);
+    if (response.ok) return response;
+
+    let payload = {};
+    try {
+      payload = await response.clone().json();
+    } catch (_) {}
+
+    const status = response.status;
+    let pesan = `⚠️ Gemini gagal (HTTP ${status})`;
+    if (status === 401) pesan = '⚠️ API key Gemini ditolak (401)';
+    else if (status === 403) pesan = '⚠️ Akses Gemini ditolak (403)';
+    else if (status === 429) pesan = '⚠️ Batas penggunaan Gemini tercapai (429)';
+    else if (status >= 500) pesan = '⚠️ Server AI sedang bermasalah. Coba lagi.';
+
+    setTimeout(() => {
+      const statusText = document.getElementById('status-text');
+      if (statusText) statusText.textContent = pesan;
+
+      // Untuk auth error, hentikan loop supaya tidak terus membombardir API.
+      if ((status === 401 || status === 403) && scannerIntervalId) {
+        clearInterval(scannerIntervalId);
+      }
+    }, 0);
+
+    return new Response(JSON.stringify({
+      error: payload?.error || pesan,
+      status
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  };
+})();
