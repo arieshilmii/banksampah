@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Sampah Kecamatan Sukolilo</title>
+    <style>
+        body {
+            margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            position: relative; background-color: #2e4a38; overflow-x: hidden;
+        }
+
+        body::before {
+            content: ""; position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background-image: url('assets/bg.jpg'), url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1080');
+            background-size: cover; background-position: center; filter: blur(8px); opacity: 0.85; z-index: -1;
+        }
+
+        /* --- UI UTAMA (LOGIN & BERANDA) --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 20px; padding: 25px;
+            width: 90%; max-width: 360px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); margin: auto; z-index: 10;
+        }
+        .glass-card h2 { text-align: center; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); margin-top: 0; margin-bottom: 20px; font-size: 20px; }
+        .form-group { position: relative; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); font-weight: 600; font-size: 13px; }
+        input {
+            width: 100%; padding: 11px; box-sizing: border-box; border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px; background: rgba(255, 255, 255, 0.8); color: #1e362a; font-size: 14px; outline: none;
+        }
+        input[readonly] { background: rgba(230, 230, 230, 0.6); color: #2c4c3b; font-weight: 600; }
+        
+        #dropdown-list {
+            position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border-radius: 10px;
+            max-height: 180px; overflow-y: auto; z-index: 99; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        }
+        .dropdown-item { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; text-align: left; }
+        .dropdown-item:hover { background: #e9f3ec; }
+        .item-nama { font-weight: bold; color: #2c4c3b; font-size: 13px; }
+        .item-unit { font-size: 11px; color: #6c757d; margin-top: 2px; }
+
+        .btn-submit {
+            width: 100%; padding: 13px; background: #4a7c59; color: white; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 15px rgba(74, 124, 89, 0.4);
+        }
+
+        #halaman-beranda { display: none; width: 100%; max-width: 400px; padding: 15px; box-sizing: border-box; margin: auto; z-index: 10; height: 100vh; overflow-y: auto; }
+        .header-beranda {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 15px; padding: 20px 15px; text-align: left; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .profile-section h2 { margin: 0; font-size: 22px; font-weight: 700; }
+        .profile-section p { margin: 4px 0 0 0; font-size: 12px; opacity: 0.9; }
+
+        .rekap-card {
+            background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center;
+            color: #1e362a; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .rekap-item { text-align: center; flex: 1; }
+        .rekap-divider { width: 1px; height: 30px; background: #dcdcdc; }
+        .rekap-label { font-size: 10px; color: #6c757d; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;}
+        .rekap-value { font-size: 16px; font-weight: 800; color: #4a7c59; }
+
+        .search-beranda {
+            width: 100%; padding: 12px 15px; box-sizing: border-box; border-radius: 12px; border: none; background: rgba(255, 255, 255, 0.9); font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px;
+        }
+
+        .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-bottom: 30px;}
+        .cat-card {
+            background: rgba(255, 255, 255, 0.85); border-radius: 14px; padding: 15px 8px; text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.1s;
+        }
+        .cat-card:active { transform: scale(0.95); }
+        .cat-icon { font-size: 28px; margin-bottom: 6px; }
+        .cat-title { font-size: 13px; font-weight: bold; color: #1e362a; }
+        .cat-subtitle { font-size: 10px; color: #6c757d; margin-top: 3px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: flex-end; z-index: 999;
+        }
+        .modal-content {
+            background: #f4f7f5; width: 100%; max-width: 400px; border-top-left-radius: 20px; border-top-right-radius: 20px;
+            padding: 20px; box-sizing: border-box; position: relative; animation: slideUp 0.3s ease; max-height: 85vh; display: flex; flex-direction: column;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+        .modal-title { margin: 0; font-size: 16px; color: #2c4c3b; font-weight: bold; }
+        .modal-close { background: #e0e0e0; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; color: #555; cursor: pointer; }
+        
+        .subcat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
+        .subcat-card {
+            background: #ffffff; border: 1px solid #dce0dd; border-radius: 12px; padding: 15px 10px; text-align: center;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: background 0.2s, transform 0.1s;
+        }
+        .subcat-card:active { background: #e2ede5; transform: scale(0.96); }
+        .subcat-icon { font-size: 32px; margin-bottom: 8px; }
+        .subcat-name { font-size: 12px; font-weight: 600; color: #2c4c3b; line-height: 1.3; }
+        
+        /* --- UI KAMERA BARU --- */
+        #camera-ui {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; z-index: 9999; display: none; flex-direction: column;
+        }
+        
+        #kamera-video {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1;
+        }
+
+        .kamera-overlay-dark {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2; display: flex; flex-direction: column;
+        }
+
+        .kamera-top-bar {
+            padding: 40px 20px 20px 20px; display: flex; align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
+            z-index: 3;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white;
+            border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+        }
+        
+        .kamera-title-area {
+            flex: 1; text-align: center; color: white; margin-right: 40px;
+        }
+        .kamera-title-area h2 { margin: 0; font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+        .scanner-focus-area {
+            flex: 1; display: flex; justify-content: center; align-items: center; position: relative;
+        }
+        
+        .scanner-box {
+            width: 280px; height: 150px; position: relative;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
+            border-radius: 12px;
+        }
+
+        .bracket { position: absolute; width: 30px; height: 30px; border-color: #00ff88; border-style: solid; }
+        .b-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 12px;}
+        .b-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 12px;}
+        .b-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 12px;}
+        .b-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 12px;}
+
+        .scan-line {
+            width: 100%; height: 2px; background: rgba(0, 255, 136, 0.8);
+            position: absolute; top: 50%; left: 0; box-shadow: 0 0 10px #00ff88;
+            animation: scanMove 2s infinite linear;
+        }
+        @keyframes scanMove { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        .kamera-bottom-panel {
+            background: rgba(0, 0, 0, 0.85); border-top-left-radius: 25px; border-top-right-radius: 25px;
+            padding: 30px 20px; z-index: 3; text-align: center; display: flex; flex-direction: column; align-items: center;
+        }
+
+        .kamera-status-info { color: #00ff88; font-size: 14px; margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px;}
+        .spinner { width: 16px; height: 16px; border: 2px solid #00ff88; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .ai-result-display {
+            font-size: 45px; font-weight: 900; color: white; display: none; margin-bottom: 15px;
+        }
+        .ai-result-display span { font-size: 20px; color: #aaa; font-weight: normal;}
+
+        .btn-action-main {
+            background: #ffffff; color: #000; font-weight: bold; font-size: 16px;
+            padding: 16px 40px; border: none; border-radius: 30px; width: 100%; max-width: 300px;
+            cursor: pointer; display: none; box-shadow: 0 4px 15px rgba(255,255,255,0.2); transition: 0.3s;
+        }
+        .btn-action-main:active { transform: scale(0.95); }
+
+        .btn-action-manual {
+            background: transparent; color: #fff; font-size: 14px; text-decoration: underline;
+            border: none; margin-top: 15px; cursor: pointer; opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card" id="form-login">
+        <h2>Pengaturan Profil</h2>
+        <div class="form-group">
+            <label>Nama Pegawai (Ketik Nama / Kelurahan)</label>
+            <input type="text" id="input-nama" placeholder="Ketik pencarian..." autocomplete="off">
+            <div id="dropdown-list"></div>
+        </div>
+        <div class="form-group"><label>Unit Kerja</label><input type="text" id="input-unit" placeholder="Otomatis terisi..." readonly></div>
+        <button class="btn-submit" onclick="simpanProfil()">Simpan & Lanjutkan</button>
+    </div>
+
+    <div id="halaman-beranda">
+        <div class="header-beranda">
+            <div class="profile-section"><h2 id="teks-sapa">Halo, Pegawai</h2><p id="teks-unit">📍 Unit Kerja: -</p></div>
+            <div class="rekap-card">
+                <div class="rekap-item"><div class="rekap-label">Total Terkumpul</div><div class="rekap-value" id="teks-total">0 Kg</div></div>
+                <div class="rekap-divider"></div>
+                <div class="rekap-item"><div class="rekap-label">Terakhir Setor</div><div class="rekap-value" id="teks-terakhir" style="color: #6c757d; font-size: 14px;">Belum ada</div></div>
+            </div>
+        </div>
+
+        <input type="text" class="search-beranda" placeholder="🔍 Cari jenis sampah (misal: Koran)...">
+        <div class="category-grid">
+            <div class="cat-card" onclick="bukaModal('Kertas & Karton')"><div class="cat-icon">📦</div><div class="cat-title">Kertas & Karton</div></div>
+            <div class="cat-card" onclick="bukaModal('Plastik Botol')"><div class="cat-icon">🍾</div><div class="cat-title">Plastik Botol</div></div>
+            <div class="cat-card" onclick="bukaModal('Lembaran & Kemasan')"><div class="cat-icon">🛍️</div><div class="cat-title">Lembaran & Kemasan</div></div>
+            <div class="cat-card" onclick="bukaModal('Keras, Ember & Tutup')"><div class="cat-icon">🪣</div><div class="cat-title">Keras & Ember</div></div>
+            <div class="cat-card" onclick="bukaModal('Logam & Aluminium')"><div class="cat-icon">⚙️</div><div class="cat-title">Logam & Aluminium</div></div>
+            <div class="cat-card" onclick="bukaModal('Organik & Lainnya')"><div class="cat-icon">🌱</div><div class="cat-title">Organik & Lainnya</div></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-subkategori" onclick="tutupModal(event)">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title" id="modal-title">Kategori</h3><button class="modal-close" onclick="document.getElementById('modal-subkategori').style.display='none'">✕</button></div>
+            <div class="subcat-grid" id="modal-list"></div>
+        </div>
+    </div>
+
+    <div id="camera-ui">
+        <video id="kamera-video" autoplay playsinline></video>
+        <canvas id="canvas-ai" style="display: none;"></canvas>
+
+        <div class="kamera-overlay-dark">
+            <div class="kamera-top-bar">
+                <button class="back-btn" onclick="tutupKamera()">✕</button>
+                <div class="kamera-title-area">
+                    <h2 id="cam-title">Menghitung berat...</h2>
+                </div>
+            </div>
+
+            <div class="scanner-focus-area">
+                <div class="scanner-box" id="scanner-box">
+                    <div class="bracket b-tl"></div><div class="bracket b-tr"></div>
+                    <div class="bracket b-bl"></div><div class="bracket b-br"></div>
+                    <div class="scan-line" id="scan-line"></div>
+                </div>
+            </div>
+
+            <div class="kamera-bottom-panel">
+                <div class="kamera-status-info" id="kamera-status">
+                    <div class="spinner" id="spinner"></div>
+                    <span id="status-text">Menganalisis angka timbangan...</span>
+                </div>
+                
+                <div class="ai-result-display" id="ai-result">0.0 <span>Kg</span></div>
+                
+                <button class="btn-action-main" id="btn-lanjut" onclick="simpanKeDatabase()">OK / Lanjut</button>
+                <button class="btn-action-manual" id="btn-manual" onclick="inputManual()">Input Manual (Bila Layar Silau)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data_pegawai.js"></script>
+    
+    <script>
+        const dbSubKategori = {
+            'Kertas & Karton': [ { name: "Koran", icon: "📰" }, { name: "Kertas HVS", icon: "📄" }, { name: "Sak Semen", icon: "🛍️" }, { name: "Kertas Buram", icon: "📜" }, { name: "Majalah", icon: "📖" }, { name: "Duplek", icon: "📦" } ],
+            'Plastik Botol': [ { name: "PET Putih Bening", icon: "🍾" }, { name: "PET Biru Muda", icon: "🧴" }, { name: "PET Biru/Hijau", icon: "🫙" }, { name: "PET Kotor", icon: "🗑️" }, { name: "PET Minyak", icon: "🛢️" }, { name: "Botol Sirup", icon: "🍷" }, { name: "Botol Kecap", icon: "🍶" }, { name: "Beling Warna", icon: "🍼" } ],
+            'Lembaran & Kemasan': [ { name: "Plastik Bening", icon: "🛍️" }, { name: "Plastik Kresek", icon: "🗑️" }, { name: "Sablon Tipis", icon: "🏷️" }, { name: "Plastik Foil", icon: "🍬" }, { name: "Plastik Karung", icon: "🌾" } ],
+            'Keras, Ember & Tutup': [ { name: "Plastik PS", icon: "🥡" }, { name: "Tutup Galon", icon: "⏺️" }, { name: "Tutup Botol", icon: "🔘" }, { name: "Keping CD", icon: "💿" }, { name: "Bak / Ember", icon: "🪣" }, { name: "Galon / Pipa", icon: "🚰" } ],
+            'Logam & Aluminium': [ { name: "Tembaga", icon: "🟤" }, { name: "Perunggu / Wajan", icon: "🍳" }, { name: "Kuningan", icon: "🔑" }, { name: "Plat Aluminium", icon: "📐" }, { name: "Kaleng / Panci", icon: "🥫" }, { name: "Besi Tebal", icon: "⛓️" } ],
+            'Organik & Lainnya': [ { name: "Minyak Jelantah", icon: "🛢️" }, { name: "Karak / Nasi", icon: "🍚" }, { name: "Sepatu Bekas", icon: "👞" } ]
+        };
+
+        const inputNama = document.getElementById('input-nama'), dropdownList = document.getElementById('dropdown-list'), inputUnit = document.getElementById('input-unit');
+        let totalBeratGlobal = 0;
+
+        inputNama.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase(); dropdownList.innerHTML = '';
+            if (!query) { dropdownList.style.display = 'none'; inputUnit.value = ''; return; }
+            const hasilCari = (typeof dataPegawai !== 'undefined') ? dataPegawai.filter(p => (p.nama||'').toLowerCase().includes(query) || (p.unit||'').toLowerCase().includes(query)) : [];
+            if (hasilCari.length > 0) {
+                dropdownList.style.display = 'block';
+                hasilCari.slice(0, 15).forEach(pegawai => {
+                    const div = document.createElement('div'); div.className = 'dropdown-item';
+                    div.innerHTML = `<div class="item-nama">${pegawai.nama}</div><div class="item-unit">📍 ${pegawai.unit}</div>`;
+                    div.onclick = function() { inputNama.value = pegawai.nama; inputUnit.value = pegawai.unit; dropdownList.style.display = 'none'; };
+                    dropdownList.appendChild(div);
+                });
+            } else { dropdownList.style.display = 'none'; }
+        });
+
+        function getNamaPanggilan(fullName) { const words = (fullName||"").trim().split(" "); return words.length > 1 ? words[1] : words[0]; }
+        
+        function muatDataRekap() {
+            const riwayat = JSON.parse(localStorage.getItem('riwayat_setor')) || [];
+            if(riwayat.length > 0) {
+                totalBeratGlobal = riwayat.reduce((sum, item) => sum + item.berat, 0);
+                document.getElementById('teks-total').textContent = totalBeratGlobal.toFixed(1) + " Kg";
+                const tgl = new Date(riwayat[riwayat.length-1].waktu);
+                document.getElementById('teks-terakhir').textContent = `${tgl.getDate()}/${tgl.getMonth()+1}/${tgl.getFullYear()}`;
+            }
+        }
+
+        function simpanProfil() {
+            const nama = inputNama.value, unit = inputUnit.value;
+            if(!nama || !unit) { alert('Silakan pilih nama dari daftar!'); return; }
+            localStorage.setItem('userBankSampah', JSON.stringify({ nama: nama, unit: unit }));
+            tampilBeranda(nama, unit);
+        }
+
+        function tampilBeranda(namaLengkap, unit) {
+            document.getElementById('form-login').style.display = 'none'; document.getElementById('halaman-beranda').style.display = 'block';
+            const namaPanggilan = getNamaPanggilan(namaLengkap);
+            document.getElementById('teks-sapa').textContent = `Halo, ${namaPanggilan.charAt(0).toUpperCase() + namaPanggilan.slice(1).toLowerCase()}`;
+            document.getElementById('teks-unit').textContent = `📍 ${unit}`;
+            muatDataRekap();
+        }
+
+        window.onload = function() { const saved = localStorage.getItem('userBankSampah'); if (saved) { const u = JSON.parse(saved); tampilBeranda(u.nama, u.unit); } };
+
+        function bukaModal(kategori) {
+            document.getElementById('modal-title').textContent = kategori;
+            let htmlList = '';
+            (dbSubKategori[kategori] || []).forEach(item => {
+                htmlList += `<div class="subcat-card" onclick="mulaiKamera('${item.name}')"><div class="subcat-icon">${item.icon}</div><div class="subcat-name">${item.name}</div></div>`;
+            });
+            document.getElementById('modal-list').innerHTML = htmlList; document.getElementById('modal-subkategori').style.display = 'flex';
+        }
+        function tutupModal(e) { if (e.target.id === 'modal-subkategori') document.getElementById('modal-subkategori').style.display = 'none'; }
+
+
+        /* =========================================================
+           GEMINI VISION API (VIA NETLIFY FUNCTIONS) DENGAN KOMPRESI
+           ========================================================= */
+        let streamKamera = null;
+        let isScanning = false;
+        let jenisSampahAktif = "";
+        let beratTerbaca = 0;
+        let scanInterval;
+
+        async function mulaiKamera(namaSampah) {
+            document.getElementById('modal-subkategori').style.display = 'none';
+            document.getElementById('camera-ui').style.display = 'flex';
+            jenisSampahAktif = namaSampah;
+            
+            document.getElementById('cam-title').textContent = `Menghitung berat ${namaSampah}`;
+            document.getElementById('scan-line').style.display = 'block';
+            document.getElementById('ai-result').style.display = 'none';
+            document.getElementById('btn-lanjut').style.display = 'none';
+            document.getElementById('btn-manual').style.display = 'inline-block';
+            
+            document.getElementById('kamera-status').style.display = 'flex';
+            document.getElementById('kamera-status').style.color = "#00ff88";
+            document.getElementById('status-text').textContent = "Menghubungkan ke kamera...";
+            document.getElementById('spinner').style.display = 'block';
+
+            const video = document.getElementById('kamera-video');
+            isScanning = true;
+
+            try {
+                streamKamera = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = streamKamera;
+                
+                video.onloadedmetadata = () => {
+                    document.getElementById('status-text').textContent = "Menganalisis angka timbangan...";
+                    scanInterval = setInterval(KirimKeGemini, 3500);
+                };
+            } catch (err) {
+                alert("Gagal mengakses kamera. Mohon izinkan akses kamera di peramban Anda."); tutupKamera();
+            }
+        }
+
+        async function KirimKeGemini() {
+            if (!isScanning) return;
+            
+            const video = document.getElementById('kamera-video');
+            const canvas = document.getElementById('canvas-ai');
+            const ctx = canvas.getContext('2d');
+            
+            // Kompresi resolusi gambar (agar ringan dikirim ke server Netlify)
+            const targetWidth = 640;
+            const scale = targetWidth / video.videoWidth;
+            canvas.width = targetWidth;
+            canvas.height = video.videoHeight * scale;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Konversi ke format Base64 JPEG dengan kompresi 50%
+            const base64Image = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+
+            try {
+                // Memanggil Netlify Function
+                const response = await fetch('/.netlify/functions/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error("Error dari server:", data.error);
+                    document.getElementById('status-text').textContent = "⚠️ Kendala API Key di Netlify";
+                    return;
+                }
+
+                const aiTeks = data.candidates[0].content.parts[0].text.trim();
+                
+                if(aiTeks.includes("KOSONG")) {
+                    document.getElementById('status-text').textContent = "Layar kosong / silau. Mencari angka...";
+                    return; 
+                }
+
+                const angkaBersih = aiTeks.replace(/[^0-9.]/g, ''); 
+                const nilaiBerat = parseFloat(angkaBersih);
+
+                if (!isNaN(nilaiBerat) && nilaiBerat > 0) {
+                    suksesScan(nilaiBerat);
+                } else {
+                    document.getElementById('status-text').textContent = "Angka tidak valid. Mengulang...";
+                }
+
+            } catch (error) {
+                console.error("Kesalahan koneksi:", error);
+                document.getElementById('status-text').textContent = "⚠️ Koneksi terputus. Mencoba lagi...";
+            }
+        }
+
+        function suksesScan(nilai) {
+            isScanning = false;
+            clearInterval(scanInterval);
+            
+            document.getElementById('kamera-video').pause();
+            beratTerbaca = nilai;
+            
+            document.getElementById('scan-line').style.display = 'none';
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('btn-manual').style.display = 'none';
+            
+            const statusBox = document.getElementById('kamera-status');
+            statusBox.style.color = "#fff";
+            document.getElementById('status-text').textContent = "Berhasil dibaca!";
+            
+            const aiResult = document.getElementById('ai-result');
+            aiResult.innerHTML = `${beratTerbaca} <span>Kg</span>`;
+            aiResult.style.display = 'block';
+
+            document.getElementById('btn-lanjut').style.display = 'block';
+        }
+
+        function tutupKamera() {
+            isScanning = false; clearInterval(scanInterval);
+            if (streamKamera) streamKamera.getTracks().forEach(track => track.stop());
+            document.getElementById('camera-ui').style.display = 'none';
+        }
+
+        function simpanKeDatabase() {
+            let riwayat = JSON.parse(localStorage.getItem('riwayat_setor')) || [];
+            riwayat.push({ jenis: jenisSampahAktif, berat: parseFloat(beratTerbaca), waktu: new Date().toISOString() });
+            localStorage.setItem('riwayat_setor', JSON.stringify(riwayat));
+            
+            tutupKamera(); muatDataRekap();
+        }
+
+        function inputManual() {
+            const manual = prompt(`Masukkan berat sampah ${jenisSampahAktif} secara manual (Kg):`, "0.0");
+            if (manual && !isNaN(parseFloat(manual)) && parseFloat(manual) > 0) {
+                suksesScan(parseFloat(manual).toFixed(1));
+            }
+        }
+    </script>
+</body>
+</html>
