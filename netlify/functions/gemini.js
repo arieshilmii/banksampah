@@ -1,8 +1,21 @@
 // File: netlify/functions/gemini.js
 
-const JSON_HEADERS = { "Content-Type": "application/json" };
+const JSON_HEADERS = {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store"
+};
 const MODEL = "gemini-3.8-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function getRetrySeconds(data) {
+    const message = data?.error?.message || "";
+    const match = message.match(/retry in\s+([0-9.]+)s/i);
+    if (!match) return 10;
+    const seconds = Math.ceil(Number(match[1]));
+    return Number.isFinite(seconds) ? Math.max(2, seconds + 1) : 10;
+}
 
 async function callGemini(apiKey, body) {
     const response = await fetch(GEMINI_URL, {
@@ -18,6 +31,25 @@ async function callGemini(apiKey, body) {
     return { response, data };
 }
 
+async function callGeminiWithBackoff(apiKey, body) {
+    let result = await callGemini(apiKey, body);
+
+    if (result.response.status !== 429) return result;
+
+    const retrySeconds = getRetrySeconds(result.data);
+
+    // Netlify Function jangan ditahan terlalu lama. Untuk retry singkat (umumnya RPM),
+    // tunggu sesuai arahan Gemini lalu coba satu kali lagi. Jika jedanya terlalu lama,
+    // kembalikan 429 agar client tidak membuat request bertubi-tubi.
+    if (retrySeconds <= 22) {
+        console.warn(`Gemini rate limited. Retrying once in ${retrySeconds}s.`);
+        await sleep(retrySeconds * 1000);
+        result = await callGemini(apiKey, body);
+    }
+
+    return result;
+}
+
 export default async (request) => {
     const API_KEY = Netlify.env.get("GEMINI_API_KEY");
 
@@ -31,53 +63,18 @@ export default async (request) => {
         });
     }
 
-    // Health check aman: tidak pernah mengembalikan nilai API key.
-    // GET /.netlify/functions/gemini akan menguji koneksi Netlify -> Gemini.
+    // Health check ringan: cukup memastikan environment variable tersedia.
+    // Tidak memanggil Gemini supaya pengecekan ini tidak ikut menghabiskan quota.
     if (request.method === "GET") {
-        try {
-            const { response, data } = await callGemini(API_KEY, {
-                contents: [{
-                    parts: [{ text: "Jawab tepat satu kata: OK" }]
-                }],
-                generationConfig: {
-                    thinkingConfig: { thinkingLevel: "low" }
-                }
-            });
-
-            if (!response.ok) {
-                return new Response(JSON.stringify({
-                    ok: false,
-                    keyConfigured: true,
-                    model: MODEL,
-                    upstreamStatus: response.status,
-                    error: data?.error?.message || `Gemini API gagal dengan HTTP ${response.status}`
-                }), {
-                    status: 200,
-                    headers: JSON_HEADERS
-                });
-            }
-
-            return new Response(JSON.stringify({
-                ok: true,
-                keyConfigured: true,
-                model: MODEL,
-                upstreamStatus: 200
-            }), {
-                status: 200,
-                headers: JSON_HEADERS
-            });
-        } catch (error) {
-            return new Response(JSON.stringify({
-                ok: false,
-                keyConfigured: true,
-                model: MODEL,
-                upstreamStatus: null,
-                error: error instanceof Error ? error.message : "Health check gagal."
-            }), {
-                status: 200,
-                headers: JSON_HEADERS
-            });
-        }
+        return new Response(JSON.stringify({
+            ok: true,
+            keyConfigured: true,
+            model: MODEL,
+            note: "API key tersedia di Netlify. Health check ini tidak memakai quota Gemini."
+        }), {
+            status: 200,
+            headers: JSON_HEADERS
+        });
     }
 
     if (request.method !== "POST") {
@@ -100,7 +97,7 @@ export default async (request) => {
             });
         }
 
-        const { response: geminiResponse, data } = await callGemini(API_KEY, {
+        const requestBody = {
             contents: [{
                 parts: [
                     {
@@ -119,18 +116,24 @@ export default async (request) => {
                     thinkingLevel: "low"
                 }
             }
-        });
+        };
+
+        const { response: geminiResponse, data } = await callGeminiWithBackoff(API_KEY, requestBody);
 
         if (!geminiResponse.ok) {
             const googleMessage = data?.error?.message || `Gemini API gagal dengan HTTP ${geminiResponse.status}`;
+            const retryAfter = geminiResponse.status === 429 ? getRetrySeconds(data) : null;
             console.error("Gemini API error:", geminiResponse.status, googleMessage);
 
             return new Response(JSON.stringify({
                 error: googleMessage,
-                status: geminiResponse.status
+                status: geminiResponse.status,
+                retryAfter
             }), {
                 status: geminiResponse.status,
-                headers: JSON_HEADERS
+                headers: retryAfter
+                    ? { ...JSON_HEADERS, "Retry-After": String(retryAfter) }
+                    : JSON_HEADERS
             });
         }
 
