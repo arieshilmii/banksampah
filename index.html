@@ -159,10 +159,10 @@
 
         .kamera-bottom-panel {
             background: rgba(0, 0, 0, 0.85); border-top-left-radius: 25px; border-top-right-radius: 25px;
-            padding: 30px 20px; z-index: 3; text-align: center; display: flex; flex-direction: column; align-items: center;
+            padding: 24px 20px 28px; z-index: 3; text-align: center; display: flex; flex-direction: column; align-items: center;
         }
 
-        .kamera-status-info { color: #00ff88; font-size: 14px; margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px;}
+        .kamera-status-info { color: #00ff88; font-size: 14px; margin-bottom: 16px; font-weight: 500; display: flex; align-items: center; gap: 8px;}
         .spinner { width: 16px; height: 16px; border: 2px solid #00ff88; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -179,9 +179,12 @@
         .btn-action-main:active { transform: scale(0.95); }
 
         .btn-action-manual {
-            background: transparent; color: #fff; font-size: 14px; text-decoration: underline;
-            border: none; margin-top: 15px; cursor: pointer; opacity: 0.8;
+            background: rgba(255,255,255,0.14); color: #fff; font-size: 14px; font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.55); border-radius: 28px; padding: 13px 20px;
+            width: 100%; max-width: 300px; margin: 0 0 14px; cursor: pointer; display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
         }
+        .btn-action-manual:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
@@ -250,11 +253,10 @@
                     <div class="spinner" id="spinner"></div>
                     <span id="status-text">Menganalisis angka timbangan...</span>
                 </div>
-                
+
+                <button class="btn-action-manual" id="btn-manual" onclick="inputManual()">⌨️ Tidak terbaca? Input Berat Manual</button>
                 <div class="ai-result-display" id="ai-result">0.0 <span>Kg</span></div>
-                
                 <button class="btn-action-main" id="btn-lanjut" onclick="simpanKeDatabase()">OK / Lanjut</button>
-                <button class="btn-action-manual" id="btn-manual" onclick="inputManual()">Input Manual (Bila Layar Silau)</button>
             </div>
         </div>
     </div>
@@ -337,17 +339,27 @@
         let jenisSampahAktif = "";
         let beratTerbaca = 0;
         let scanInterval;
+        let jumlahGagalScan = 0;
+        let manualFallbackTimer = null;
+
+        function tampilkanInputManual(pesan) {
+            const tombolManual = document.getElementById('btn-manual');
+            tombolManual.style.display = 'block';
+            if (pesan) document.getElementById('status-text').textContent = pesan;
+        }
 
         async function mulaiKamera(namaSampah) {
             document.getElementById('modal-subkategori').style.display = 'none';
             document.getElementById('camera-ui').style.display = 'flex';
             jenisSampahAktif = namaSampah;
+            jumlahGagalScan = 0;
+            clearTimeout(manualFallbackTimer);
             
             document.getElementById('cam-title').textContent = `Menghitung berat ${namaSampah}`;
             document.getElementById('scan-line').style.display = 'block';
             document.getElementById('ai-result').style.display = 'none';
             document.getElementById('btn-lanjut').style.display = 'none';
-            document.getElementById('btn-manual').style.display = 'inline-block';
+            document.getElementById('btn-manual').style.display = 'none';
             
             document.getElementById('kamera-status').style.display = 'flex';
             document.getElementById('kamera-status').style.color = "#00ff88";
@@ -356,6 +368,10 @@
 
             const video = document.getElementById('kamera-video');
             isScanning = true;
+
+            manualFallbackTimer = setTimeout(() => {
+                if (isScanning) tampilkanInputManual("Belum terbaca. Arahkan kamera atau input berat manual.");
+            }, 7000);
 
             try {
                 streamKamera = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -366,7 +382,8 @@
                     scanInterval = setInterval(KirimKeGemini, 3500);
                 };
             } catch (err) {
-                alert("Gagal mengakses kamera. Mohon izinkan akses kamera di peramban Anda."); tutupKamera();
+                tampilkanInputManual("Kamera tidak dapat diakses. Kamu tetap bisa input berat manual.");
+                document.getElementById('spinner').style.display = 'none';
             }
         }
 
@@ -377,6 +394,8 @@
             const canvas = document.getElementById('canvas-ai');
             const ctx = canvas.getContext('2d');
             
+            if (!video.videoWidth || !video.videoHeight) return;
+
             // Kompresi resolusi gambar (agar ringan dikirim ke server Netlify)
             const targetWidth = 640;
             const scale = targetWidth / video.videoWidth;
@@ -403,14 +422,20 @@
                 
                 if (data.error) {
                     console.error("Error dari server:", data.error);
-                    document.getElementById('status-text').textContent = "⚠️ Kendala API Key di Netlify";
+                    jumlahGagalScan++;
+                    if (data.status === 429) {
+                        tampilkanInputManual("Batas scan otomatis sedang tercapai. Gunakan input manual atau tunggu sebentar.");
+                    } else {
+                        tampilkanInputManual("AI belum bisa membaca. Silakan input berat manual.");
+                    }
                     return;
                 }
 
-                const aiTeks = data.candidates[0].content.parts[0].text.trim();
+                const aiTeks = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
                 
-                if(aiTeks.includes("KOSONG")) {
-                    document.getElementById('status-text').textContent = "Layar kosong / silau. Mencari angka...";
+                if(!aiTeks || aiTeks.includes("KOSONG")) {
+                    jumlahGagalScan++;
+                    tampilkanInputManual("Layar belum terbaca. Coba arahkan kamera atau input manual.");
                     return; 
                 }
 
@@ -418,23 +443,26 @@
                 const nilaiBerat = parseFloat(angkaBersih);
 
                 if (!isNaN(nilaiBerat) && nilaiBerat > 0) {
-                    suksesScan(nilaiBerat);
+                    suksesScan(nilaiBerat, 'AI');
                 } else {
-                    document.getElementById('status-text').textContent = "Angka tidak valid. Mengulang...";
+                    jumlahGagalScan++;
+                    tampilkanInputManual("Angka belum terbaca dengan yakin. Kamu bisa input manual.");
                 }
 
             } catch (error) {
                 console.error("Kesalahan koneksi:", error);
-                document.getElementById('status-text').textContent = "⚠️ Koneksi terputus. Mencoba lagi...";
+                jumlahGagalScan++;
+                tampilkanInputManual("Koneksi AI bermasalah. Kamu tetap bisa input berat manual.");
             }
         }
 
-        function suksesScan(nilai) {
+        function suksesScan(nilai, sumber = 'AI') {
             isScanning = false;
             clearInterval(scanInterval);
+            clearTimeout(manualFallbackTimer);
             
             document.getElementById('kamera-video').pause();
-            beratTerbaca = nilai;
+            beratTerbaca = Number(nilai);
             
             document.getElementById('scan-line').style.display = 'none';
             document.getElementById('spinner').style.display = 'none';
@@ -442,7 +470,7 @@
             
             const statusBox = document.getElementById('kamera-status');
             statusBox.style.color = "#fff";
-            document.getElementById('status-text').textContent = "Berhasil dibaca!";
+            document.getElementById('status-text').textContent = sumber === 'manual' ? "Berat berhasil diinput manual." : "Berhasil dibaca otomatis!";
             
             const aiResult = document.getElementById('ai-result');
             aiResult.innerHTML = `${beratTerbaca} <span>Kg</span>`;
@@ -452,7 +480,7 @@
         }
 
         function tutupKamera() {
-            isScanning = false; clearInterval(scanInterval);
+            isScanning = false; clearInterval(scanInterval); clearTimeout(manualFallbackTimer);
             if (streamKamera) streamKamera.getTracks().forEach(track => track.stop());
             document.getElementById('camera-ui').style.display = 'none';
         }
@@ -466,10 +494,16 @@
         }
 
         function inputManual() {
-            const manual = prompt(`Masukkan berat sampah ${jenisSampahAktif} secara manual (Kg):`, "0.0");
-            if (manual && !isNaN(parseFloat(manual)) && parseFloat(manual) > 0) {
-                suksesScan(parseFloat(manual).toFixed(1));
+            const manual = prompt(`Masukkan berat sampah ${jenisSampahAktif} dalam Kg. Boleh memakai titik atau koma untuk desimal.`, "0,000");
+            if (manual === null) return;
+
+            const nilaiManual = Number(String(manual).trim().replace(',', '.'));
+            if (!Number.isFinite(nilaiManual) || nilaiManual <= 0) {
+                alert("Berat tidak valid. Masukkan angka lebih dari 0, misalnya 0,260 atau 2,5.");
+                return;
             }
+
+            suksesScan(nilaiManual, 'manual');
         }
     </script>
 </body>
