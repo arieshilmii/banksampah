@@ -46,7 +46,7 @@ export default async (request) => {
                     contents: [{
                         parts: [
                             {
-                                text: "Kamu adalah AI pembaca timbangan digital. Perhatikan layar timbangan pada gambar. Jika angka berat terbaca jelas dan nilainya lebih dari 0, kembalikan HANYA angka desimalnya menggunakan titik sebagai pemisah desimal, tanpa satuan, tanpa kalimat, tanpa markdown. Contoh: 2.5 atau 10.3. Jika layar timbangan kosong, tidak terlihat, terlalu buram untuk dibaca dengan yakin, atau menunjukkan 0, kembalikan tepat satu kata: KOSONG. Jangan menebak angka jika tidak yakin."
+                                text: "Baca HANYA angka berat pada layar timbangan digital di gambar. Jika terbaca jelas dan nilainya lebih dari 0, jawab hanya angka desimal dengan titik, tanpa satuan atau kalimat. Contoh: 0.260 atau 2.5. Jika layar kosong, tidak terlihat, terlalu buram, atau menunjukkan 0, jawab tepat: KOSONG. Jangan menebak."
                             },
                             {
                                 inline_data: {
@@ -57,8 +57,10 @@ export default async (request) => {
                         ]
                     }],
                     generationConfig: {
-                        temperature: 0,
-                        maxOutputTokens: 20
+                        maxOutputTokens: 20,
+                        thinkingConfig: {
+                            thinkingLevel: "low"
+                        }
                     }
                 })
             }
