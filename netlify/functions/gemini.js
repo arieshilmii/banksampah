@@ -1,47 +1,96 @@
 // File: netlify/functions/gemini.js
 
-export async function handler(event, context) {
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+export default async (request) => {
+    if (request.method !== "POST") {
+        return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+            status: 405,
+            headers: JSON_HEADERS
+        });
     }
 
-    const API_KEY = process.env.GEMINI_API_KEY;
+    const API_KEY = Netlify.env.get("GEMINI_API_KEY");
 
     if (!API_KEY) {
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: "Variabel GEMINI_API_KEY kosong di server Netlify." }) 
-        };
+        return new Response(JSON.stringify({
+            error: "Variabel GEMINI_API_KEY kosong di server Netlify."
+        }), {
+            status: 500,
+            headers: JSON_HEADERS
+        });
     }
 
     try {
-        const body = JSON.parse(event.body);
-        const base64Image = body.image;
+        const body = await request.json();
+        const base64Image = body?.image;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: "Kamu adalah AI pembaca timbangan digital. Perhatikan gambar ini. Jika ada layar timbangan yang menunjukkan angka berat (mengandung titik desimal), kembalikan HANYA angkanya saja (misal: 2.5 atau 10.3). Jika layar timbangan KOSONG, TIDAK ADA, BURAM, atau HANYA MENUNJUKKAN ANGKA 0, kembalikan teks mutlak: KOSONG" },
-                        { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                    ]
-                }]
-            })
+        if (!base64Image || typeof base64Image !== "string") {
+            return new Response(JSON.stringify({
+                error: "Data gambar tidak ditemukan atau formatnya tidak valid."
+            }), {
+                status: 400,
+                headers: JSON_HEADERS
+            });
+        }
+
+        const geminiResponse = await fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": API_KEY
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            {
+                                text: "Kamu adalah AI pembaca timbangan digital. Perhatikan layar timbangan pada gambar. Jika angka berat terbaca jelas dan nilainya lebih dari 0, kembalikan HANYA angka desimalnya menggunakan titik sebagai pemisah desimal, tanpa satuan, tanpa kalimat, tanpa markdown. Contoh: 2.5 atau 10.3. Jika layar timbangan kosong, tidak terlihat, terlalu buram untuk dibaca dengan yakin, atau menunjukkan 0, kembalikan tepat satu kata: KOSONG. Jangan menebak angka jika tidak yakin."
+                            },
+                            {
+                                inline_data: {
+                                    mime_type: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0,
+                        maxOutputTokens: 20
+                    }
+                })
+            }
+        );
+
+        const data = await geminiResponse.json().catch(() => ({}));
+
+        if (!geminiResponse.ok) {
+            const googleMessage = data?.error?.message || `Gemini API gagal dengan HTTP ${geminiResponse.status}`;
+            console.error("Gemini API error:", geminiResponse.status, googleMessage);
+
+            return new Response(JSON.stringify({
+                error: googleMessage,
+                status: geminiResponse.status
+            }), {
+                status: geminiResponse.status,
+                headers: JSON_HEADERS
+            });
+        }
+
+        return new Response(JSON.stringify(data), {
+            status: 200,
+            headers: JSON_HEADERS
         });
-
-        const data = await response.json();
-        
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        };
     } catch (error) {
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: error.message }) 
-        };
+        console.error("Gemini function error:", error);
+
+        return new Response(JSON.stringify({
+            error: error instanceof Error ? error.message : "Terjadi kesalahan pada server."
+        }), {
+            status: 500,
+            headers: JSON_HEADERS
+        });
     }
 };
