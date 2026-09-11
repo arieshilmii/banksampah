@@ -10,6 +10,7 @@
   };
 
   function median(a){ const s=[...a].sort((x,y)=>x-y),n=s.length; return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2; }
+  function avg(a){ return a.length?a.reduce((s,v)=>s+v,0)/a.length:0; }
   function otsu(gray){
     const h=new Uint32Array(256); for(const v of gray) h[v]++;
     const total=gray.length; let sum=0; for(let i=0;i<256;i++) sum+=i*h[i];
@@ -84,19 +85,29 @@
         regionMaxRow(mask,W,H,x0+.18*w,x0+.82*w,y0+.82*h,y0+1.00*h),
         regionMaxCol(mask,W,H,x0+.02*w,x0+.32*w,y0+.54*h,y0+.90*h),
         regionMaxCol(mask,W,H,x0+.02*w,x0+.32*w,y0+.10*h,y0+.46*h),
-        regionMaxRow(mask,W,H,x0+.18*w,x0+.82*w,y0+.40*h,y0+.60*h)
+        // Segmen tengah sengaja dibaca dari inti yang sempit. Pada LCD nyata,
+        // ujung segmen vertikal dan pantulan sering masuk ke area tengah dan
+        // membuat angka 0 terbaca sebagai 8 jika area sampelnya terlalu lebar.
+        regionMaxRow(mask,W,H,x0+.28*w,x0+.72*w,y0+.43*h,y0+.57*h)
       ];
-      const bits=scores.map(v=>v>=.38?1:0);
+      const bits=scores.map((v,i)=>v>=(i===6?.42:.38)?1:0);
+
+      // Koreksi khusus 0 vs 8. Enam segmen luar harus kuat, sedangkan segmen
+      // tengah harus benar-benar kuat untuk mengubah 0 menjadi 8.
+      const outer=scores.slice(0,6);
+      const outerStrong=outer.filter(v=>v>=.55).length>=5 && avg(outer)>=.67;
+      if(outerStrong && scores[6]<.62) bits[6]=0;
+
       let best=null;
       for(const [digit,pat] of Object.entries(PATTERNS)){
         const dist=bits.reduce((n,b,i)=>n+(b!==pat[i]?1:0),0);
         if(!best||dist<best.dist) best={digit,pat,dist};
       }
       const on=[],off=[]; best.pat.forEach((v,i)=>(v?on:off).push(scores[i]));
-      const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0;
       const polarization=avg(on)-avg(off);
-      if(best.dist>1||polarization<.38) return null;
-      decoded.push({digit:best.digit,dist:best.dist,polarization});
+      const ambiguity=Math.min(...scores.map(v=>Math.abs(v-(v>=.5?1:0))));
+      if(best.dist>1||polarization<.34) return null;
+      decoded.push({digit:best.digit,dist:best.dist,polarization,ambiguity,scores});
     }
 
     let text='';
@@ -108,8 +119,15 @@
         if(dot) text+='.';
       }
     }
-    const confidence=decoded.reduce((s,d)=>s+(d.dist===0?1:.82)*Math.min(1,Math.max(0,(d.polarization-.15)/.55)),0)/decoded.length;
-    if(!/^\d+(?:\.\d+)?$/.test(text)||Number(text)<=0||confidence<.72) return null;
+
+    const confidence=decoded.reduce((s,d)=>{
+      const fit=(d.dist===0?1:.78)*Math.min(1,Math.max(0,(d.polarization-.12)/.58));
+      const center=d.scores[6];
+      const centerPenalty=(d.digit==='0'&&center>.30)?Math.max(.62,1-(center-.30)*1.25):1;
+      return s+fit*centerPenalty;
+    },0)/decoded.length;
+
+    if(!/^\d+(?:\.\d+)?$/.test(text)||Number(text)<=0||confidence<.70) return null;
     return {text,confidence};
   }
 
