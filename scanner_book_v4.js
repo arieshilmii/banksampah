@@ -3,6 +3,8 @@
   'use strict';
 
   const $ = (id) => document.getElementById(id);
+  const setText=(el,text)=>{ if(el && el.textContent!==text) el.textContent=text; };
+  const setDisplay=(el,value)=>{ if(el && el.style.display!==value) el.style.display=value; };
 
   function getProfile(){
     try { return JSON.parse(localStorage.getItem('userBankSampah') || 'null'); }
@@ -22,8 +24,6 @@
     const key=historyKey();
     let own=[];
     try { own=JSON.parse(localStorage.getItem(key)||'[]'); } catch (_) { own=[]; }
-
-    // Migrasi riwayat versi lama satu kali ke user yang sedang aktif, agar data lama tidak hilang.
     if(!localStorage.getItem(migrationKey())){
       try {
         const legacy=JSON.parse(localStorage.getItem('riwayat_setor')||'[]');
@@ -37,9 +37,7 @@
     return own;
   }
 
-  function saveUserHistory(items){
-    localStorage.setItem(historyKey(),JSON.stringify(items));
-  }
+  function saveUserHistory(items){ localStorage.setItem(historyKey(),JSON.stringify(items)); }
 
   function formatWeight(item){
     if(item?.berat_tampilan) return String(item.berat_tampilan).replace(',','.');
@@ -51,9 +49,7 @@
   function formatDateTime(iso){
     const d=new Date(iso);
     if(Number.isNaN(d.getTime())) return '-';
-    return new Intl.DateTimeFormat('id-ID',{
-      day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'
-    }).format(d).replace(' pukul ', ' • ');
+    return new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d).replace(' pukul ', ' • ');
   }
 
   function toastSaved(){
@@ -64,9 +60,9 @@
       toast.style.cssText='position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:30000;background:#173f2b;color:#fff;padding:14px 22px;border-radius:28px;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.35);white-space:nowrap;opacity:0;transition:opacity .2s ease;';
       document.body.appendChild(toast);
     }
-    toast.textContent='Timbangan Berhasil Dicatat';
+    setText(toast,'Timbangan Berhasil Dicatat');
     toast.style.opacity='1';
-    setTimeout(()=>{ toast.style.opacity='0'; },2200);
+    setTimeout(()=>{toast.style.opacity='0';},2200);
   }
 
   function injectBookStyles(){
@@ -100,7 +96,6 @@
       btn.onclick=()=>window.bukaBukuSampah();
       home.insertBefore(btn,search);
     }
-
     if(!$('savings-book-overlay')){
       const overlay=document.createElement('div');
       overlay.id='savings-book-overlay';
@@ -119,70 +114,59 @@
         </div>`;
       document.body.appendChild(overlay);
       overlay.querySelector('.book-close').onclick=()=>window.tutupBukuSampah();
-      overlay.onclick=(e)=>{ if(e.target===overlay) window.tutupBukuSampah(); };
+      overlay.onclick=(e)=>{if(e.target===overlay)window.tutupBukuSampah();};
     }
-  }
-
-  function refreshBook(){
-    ensureBookUI();
-    const items=ensureUserHistory();
-    const total=items.reduce((s,i)=>s+(Number(i.berat)||0),0);
-    const summary=$('book-home-summary');
-    if(summary) summary.textContent=items.length ? `${items.length} setoran • ${total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')} Kg` : 'Belum ada setoran sampah';
-    const totalEl=$('book-total-weight'); if(totalEl) totalEl.textContent=`${total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')} Kg`;
-    const countEl=$('book-total-count'); if(countEl) countEl.textContent=String(items.length);
-    const p=getProfile(); const name=$('book-profile-name'); if(name) name.textContent=p ? `${p.nama} • ${p.unit||''}` : 'Riwayat setoran';
-
-    const list=$('book-history-list');
-    if(!list) return;
-    if(!items.length){
-      list.innerHTML='<div class="book-empty"><div class="book-empty-icon">♻️</div><b>Belum ada simpanan sampah</b><div style="font-size:11px;margin-top:5px">Setoran yang disimpan akan muncul di sini.</div></div>';
-      return;
-    }
-    list.innerHTML=[...items].reverse().map(i=>`
-      <div class="book-row">
-        <div class="book-row-kind">${escapeHtml(i.jenis||'Sampah')}</div>
-        <div class="book-row-weight">${escapeHtml(formatWeight(i))} Kg</div>
-        <div class="book-row-date">${escapeHtml(formatDateTime(i.waktu))}</div>
-        <div></div>
-      </div>`).join('');
   }
 
   function escapeHtml(v){
     return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   }
 
-  window.bukaBukuSampah=function(){
-    refreshBook();
-    const overlay=$('savings-book-overlay'); if(overlay) overlay.style.display='flex';
-  };
-  window.tutupBukuSampah=function(){ const overlay=$('savings-book-overlay'); if(overlay) overlay.style.display='none'; };
+  function refreshBook(){
+    ensureBookUI();
+    const items=ensureUserHistory();
+    const total=items.reduce((s,i)=>s+(Number(i.berat)||0),0);
+    const totalText=total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+    setText($('book-home-summary'),items.length?`${items.length} setoran • ${totalText} Kg`:'Belum ada setoran sampah');
+    setText($('book-total-weight'),`${totalText} Kg`);
+    setText($('book-total-count'),String(items.length));
+    const p=getProfile(); setText($('book-profile-name'),p?`${p.nama} • ${p.unit||''}`:'Riwayat setoran');
+    const list=$('book-history-list');
+    if(!list)return;
+    if(!items.length){
+      const html='<div class="book-empty"><div class="book-empty-icon">♻️</div><b>Belum ada simpanan sampah</b><div style="font-size:11px;margin-top:5px">Setoran yang disimpan akan muncul di sini.</div></div>';
+      if(list.innerHTML!==html) list.innerHTML=html;
+      return;
+    }
+    const html=[...items].reverse().map(i=>`<div class="book-row"><div class="book-row-kind">${escapeHtml(i.jenis||'Sampah')}</div><div class="book-row-weight">${escapeHtml(formatWeight(i))} Kg</div><div class="book-row-date">${escapeHtml(formatDateTime(i.waktu))}</div><div></div></div>`).join('');
+    if(list.innerHTML!==html) list.innerHTML=html;
+  }
+
+  window.bukaBukuSampah=function(){refreshBook();setDisplay($('savings-book-overlay'),'flex');};
+  window.tutupBukuSampah=function(){setDisplay($('savings-book-overlay'),'none');};
 
   function forceLocalOnlyUI(){
     const ai=$('btn-ai'); if(ai) ai.remove();
-    const small=document.querySelector('.kamera-title-area small'); if(small) small.textContent='Foto dulu • pembacaan lokal';
-    const tip=$('scanner-tip'); if(tip) tip.textContent='Arahkan angka ke kotak lalu tekan Ambil Gambar. Jika hasil kurang tepat, gunakan Input Berat Manual.';
-    const manual=$('btn-manual'); if(manual) manual.textContent='⌨️ Input / Koreksi Manual';
+    setText(document.querySelector('.kamera-title-area small'),'Foto dulu • pembacaan lokal');
+    setText($('scanner-tip'),'Arahkan angka ke kotak lalu tekan Ambil Gambar. Jika hasil kurang tepat, gunakan Input Berat Manual.');
+    setText($('btn-manual'),'⌨️ Input / Koreksi Manual');
   }
 
   function normalizeScannerStatus(){
     forceLocalOnlyUI();
-    const st=$('status-text');
-    if(!st) return;
+    const st=$('status-text'); if(!st)return;
     const low=(st.textContent||'').toLowerCase();
-    if(low.includes('belum yakin') || low.includes('belum berhasil') || low.includes('gagal') || low.includes('gunakan ai') || low.includes('kuota ai')){
-      st.textContent='Angka belum terbaca. Silakan input berat manual.';
-      const manual=$('btn-manual'); if(manual) manual.style.display='block';
-      const retake=$('btn-retake'); if(retake) retake.style.display='none';
-      const next=$('btn-lanjut'); if(next) next.style.display='none';
+    if(low.includes('belum yakin')||low.includes('belum berhasil')||low.includes('gagal')||low.includes('gunakan ai')||low.includes('kuota ai')){
+      setText(st,'Angka belum terbaca. Silakan input berat manual.');
+      setDisplay($('btn-manual'),'block');
+      setDisplay($('btn-retake'),'none');
+      setDisplay($('btn-lanjut'),'none');
     }
   }
 
   window.addEventListener('load',()=>{
     ensureBookUI();
     forceLocalOnlyUI();
-
-    // AI tidak lagi menjadi bagian alur pengguna.
     window.mintaBantuanAI=function(){};
 
     const originalSuccess=window.suksesScan;
@@ -190,38 +174,31 @@
       window.suksesScan=function(nilai,sumber='lokal'){
         originalSuccess(nilai,sumber==='AI'?'lokal':sumber);
         forceLocalOnlyUI();
-        const manual=$('btn-manual'); if(manual) manual.style.display='block';
-        const retake=$('btn-retake'); if(retake) retake.style.display='none';
-        const next=$('btn-lanjut'); if(next) next.style.display='block';
-        const st=$('status-text'); if(st) st.textContent='Berat terbaca. Simpan atau koreksi manual.';
+        setDisplay($('btn-manual'),'block');
+        setDisplay($('btn-retake'),'none');
+        setDisplay($('btn-lanjut'),'block');
+        setText($('status-text'),'Berat terbaca. Simpan atau koreksi manual.');
       };
     }
 
-    // Rekap beranda kini memakai riwayat milik user aktif.
     window.muatDataRekap=function(){
       const items=ensureUserHistory();
       const total=items.reduce((s,i)=>s+(Number(i.berat)||0),0);
-      const t=$('teks-total'); if(t) t.textContent=total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+' Kg';
+      setText($('teks-total'),total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+' Kg');
       const last=$('teks-terakhir');
       if(last){
         if(items.length){
           const d=new Date(items[items.length-1].waktu);
-          last.textContent=Number.isNaN(d.getTime())?'-':`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-        } else last.textContent='Belum ada';
+          setText(last,Number.isNaN(d.getTime())?'-':`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`);
+        }else setText(last,'Belum ada');
       }
       refreshBook();
     };
 
-    // Simpan langsung ke buku user, tanpa jalur AI dan tanpa riwayat campuran antar-user.
     window.simpanKeDatabase=function(){
-      if(!Number.isFinite(Number(beratTerbaca)) || Number(beratTerbaca)<=0) return;
+      if(!Number.isFinite(Number(beratTerbaca))||Number(beratTerbaca)<=0)return;
       const items=ensureUserHistory();
-      items.push({
-        jenis:jenisSampahAktif,
-        berat:Number(beratTerbaca),
-        berat_tampilan:String(beratTeksTerbaca||beratTerbaca),
-        waktu:new Date().toISOString()
-      });
+      items.push({jenis:jenisSampahAktif,berat:Number(beratTerbaca),berat_tampilan:String(beratTeksTerbaca||beratTerbaca),waktu:new Date().toISOString()});
       saveUserHistory(items);
       tutupKamera();
       window.muatDataRekap();
@@ -231,10 +208,9 @@
     const camera=$('camera-ui');
     if(camera){
       const obs=new MutationObserver(()=>normalizeScannerStatus());
-      obs.observe(camera,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style']});
+      obs.observe(camera,{subtree:true,childList:true,characterData:true});
     }
 
-    // Setelah profil otomatis dimuat oleh script utama, perbarui buku sekali lagi.
-    setTimeout(()=>{ try{ window.muatDataRekap(); }catch(_){} },50);
+    setTimeout(()=>{try{window.muatDataRekap();}catch(_){}},50);
   });
 })();
