@@ -7,3 +7,4 @@ document.write('<script src="scanner_universal_v7.js"><\/script>');
 document.write('<script src="ui_glass_v9.js"><\/script>');
 document.write('<script src="ui_glass_v10.js"><\/script>');
 document.write('<script src="ui_bg_fix_v11.js?v=111"><\/script>');
+document.write('<script src="ui_bg_inline_v12.js?v=1201"><\/script>');
