@@ -7,4 +7,4 @@ document.write('<script src="scanner_ui_v6.js"><\/script>');
 document.write('<script src="scanner_universal_v7.js"><\/script>');
 document.write('<script src="ui_clean_v13.js?v=1301"><\/script>');
 document.write('<script src="search_autocomplete_v14.js?v=1401"><\/script>');
-document.write('<script src="ui_nav_v15.js?v=1501"><\/script>');
+document.write('<script src="ui_nav_v15.js?v=1502"><\/script>');
