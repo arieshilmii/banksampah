@@ -13,3 +13,4 @@ document.write('<script src="ui_camera_v17.js?v=1702"><\/script>');
 document.write('<script src="camera_fix_v18.js?v=1801"><\/script>');
 document.write('<script src="ui_camera_v19.js?v=1901"><\/script>');
 document.write('<script src="ui_camera_v20.js?v=2001"><\/script>');
+document.write('<script src="ui_status_v21.js?v=2101"><\/script>');
