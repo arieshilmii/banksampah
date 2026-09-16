@@ -1,195 +1,246 @@
-// One photo -> one OCR session. Never silently truncate a scale's third decimal.
+// Bank Sampah OCR: fast seven-segment reading, with a warm/reusable Tesseract fallback.
+// Never infer a missing decimal digit; every automatic result must contain 3 decimal places.
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
-  let paddle=null,paddleLoading=null,tesseract=null,tesseractLoading=null;
-  let busy=false,captured=null,session=0;
-  const THREE_DECIMALS=/^\d{1,4}\.\d{3}$/;
+  const PATTERNS={0:'1111110',1:'0110000',2:'1101101',3:'1111001',4:'0110011',5:'1011011',6:'1011111',7:'1110000',8:'1111111',9:'1111011'};
+  const SEGMENTS=[[.18,.82,0,.16],[.74,1,.12,.46],[.74,1,.54,.88],[.18,.82,.84,1],[0,.26,.54,.88],[0,.26,.12,.46],[.18,.82,.42,.58]];
+  const EXACT=/^\d{1,3}\.\d{3}$/;
+  let worker=null,workerPromise=null,session=0,busy=false;
 
   function status(message,loading=false){
     if($('status-text'))$('status-text').textContent=message;
     if($('spinner'))$('spinner').style.display=loading?'block':'none';
   }
   function ensureUI(){
-    const actions=document.querySelector('#camera-ui .scanner-actions'),box=$('scanner-box');
-    if(!actions||!box)return;
+    const actions=$('camera-ui')?.querySelector('.scanner-actions');
+    const box=$('scanner-box');if(!actions||!box)return;
     if(!$('btn-capture')){
-      const button=document.createElement('button');button.id='btn-capture';button.type='button';
-      button.textContent='📸 Ambil Gambar';
-      button.style.cssText='position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);width:calc(100% - 40px);max-width:320px;z-index:14000;border:0;border-radius:28px;padding:15px 18px;background:#20d979;color:#052315;font-weight:850;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.34);cursor:pointer';
-      button.onclick=()=>window.ambilGambarTimbangan();actions.insertBefore(button,actions.firstChild);
+      const b=document.createElement('button');b.id='btn-capture';b.type='button';
+      b.style.cssText='position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);width:calc(100% - 40px);max-width:320px;z-index:14000;border:0;border-radius:28px;padding:15px 18px;background:#20d979;color:#052315;font-weight:850;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.34);cursor:pointer';
+      b.textContent='📸 Ambil Gambar';b.onclick=()=>window.ambilGambarTimbangan?.();actions.prepend(b);
     }
     if(!$('capture-preview')){
-      const canvas=document.createElement('canvas');canvas.id='capture-preview';
+      const canvas=document.createElement('canvas');canvas.id='capture-preview';canvas.hidden=true;
       canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:none;border-radius:12px;z-index:3;background:#fff';
-      canvas.hidden=true;box.appendChild(canvas);
+      box.appendChild(canvas);
     }
-    const tip=$('scanner-tip');if(tip)tip.textContent='Pastikan tiga digit setelah koma terlihat jelas. Periksa berat sebelum menyimpan.';
+    if($('scanner-tip'))$('scanner-tip').textContent='Arahkan tiga angka desimal ke dalam bingkai. Periksa berat sebelum menyimpan.';
   }
-  function resetCapture(){
-    session++;busy=false;captured=null;
-    ensureUI();
+  function reset(){
+    session++;busy=false;ensureUI();
     const preview=$('capture-preview');
-    if(preview){preview.style.display='none';preview.hidden=true;const context=preview.getContext('2d');if(context)context.clearRect(0,0,preview.width,preview.height);}
-    ['ai-result','btn-lanjut','btn-manual','btn-retake-v19'].forEach(id=>{const el=$(id);if(el)el.style.display='none';});
+    if(preview){preview.hidden=true;preview.style.display='none';preview.getContext('2d')?.clearRect(0,0,preview.width,preview.height);}
+    ['ai-result','btn-lanjut','btn-manual','btn-retake-v19'].forEach(id=>{if($(id))$(id).style.display='none';});
     $('camera-ui')?.querySelector('.scanner-actions')?.classList.remove('success-v19');
-    const capture=$('btn-capture');if(capture){capture.style.display='block';capture.disabled=false;}
+    if($('btn-capture')){$('btn-capture').style.display='block';$('btn-capture').disabled=false;}
   }
-  // Camera initializer calls this on every new opening, including Ambil Ulang.
-  window.resetUniversalCapture=resetCapture;
-  window.cancelUniversalCapture=function(){session++;busy=false;captured=null;};
+  window.resetUniversalCapture=reset;
+  window.cancelUniversalCapture=()=>{session++;busy=false;};
 
-  async function loadPaddle(){
-    if(paddle)return paddle;
-    if(paddleLoading)return paddleLoading;
-    paddleLoading=(async()=>{
-      status('Sedang Dibaca AI',true);
-      const mod=await import('https://cdn.jsdelivr.net/npm/@paddleocr/paddleocr-js@0.4.2/+esm');
-      if(!mod?.PaddleOCR)throw new Error('PaddleOCR unavailable');
-      paddle=await mod.PaddleOCR.create({lang:'en',ocrVersion:'PP-OCRv5',worker:false,textDetectionBatchSize:1,textRecognitionBatchSize:4,ortOptions:{backend:'wasm',wasmPaths:'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/',numThreads:1,simd:true}});
-      return paddle;
-    })().catch(error=>{paddleLoading=null;throw error;});
-    return paddleLoading;
-  }
-  async function loadTesseract(){
-    if(tesseract)return tesseract;
-    if(tesseractLoading)return tesseractLoading;
-    tesseractLoading=(async()=>{
+  async function warmTesseract(){
+    if(worker)return worker;
+    if(workerPromise)return workerPromise;
+    workerPromise=(async()=>{
       if(!window.Tesseract){
-        await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';script.onload=resolve;script.onerror=()=>reject(new Error('Tesseract unavailable'));document.head.appendChild(script);});
+        await new Promise((resolve,reject)=>{
+          const script=document.createElement('script');
+          script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+          script.onload=resolve;script.onerror=()=>reject(new Error('Tesseract script unavailable'));
+          document.head.appendChild(script);
+        });
       }
-      tesseract=await window.Tesseract.createWorker('eng',1);
-      await tesseract.setParameters({tessedit_char_whitelist:'0123456789.,OoQDIil|SBGkgKG ',tessedit_pageseg_mode:window.Tesseract.PSM?.SINGLE_LINE||'7',preserve_interword_spaces:'1'});
-      return tesseract;
-    })().catch(error=>{tesseractLoading=null;throw error;});
-    return tesseractLoading;
+      const w=await window.Tesseract.createWorker('eng',1);
+      await w.setParameters({
+        tessedit_char_whitelist:'0123456789.,',
+        tessedit_pageseg_mode:window.Tesseract.PSM?.SINGLE_LINE||'7',
+        preserve_interword_spaces:'0'
+      });
+      worker=w;return worker;
+    })().catch(err=>{workerPromise=null;console.warn('Tesseract initialization:',err);throw err;});
+    return workerPromise;
   }
-  function variant(source,mode){
-    const canvas=document.createElement('canvas');canvas.width=1400;canvas.height=Math.max(220,Math.round(canvas.width*source.height/source.width));
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,0,0,canvas.width,canvas.height);
-    if(mode==='original')return canvas;
-    const image=ctx.getImageData(0,0,canvas.width,canvas.height);const gray=new Uint8Array(canvas.width*canvas.height);
-    const hist=new Uint32Array(256);let min=255,max=0;
-    for(let i=0,j=0;i<image.data.length;i+=4,j++){const g=Math.round(.299*image.data[i]+.587*image.data[i+1]+.114*image.data[i+2]);gray[j]=g;min=Math.min(min,g);max=Math.max(max,g);}
-    const span=Math.max(35,max-min);let total=0,sum=0;
-    for(let i=0;i<gray.length;i++){gray[i]=Math.max(0,Math.min(255,Math.round((gray[i]-min)*255/span)));hist[gray[i]]++;}
-    for(let i=0;i<256;i++){total+=hist[i];sum+=i*hist[i];}
-    let threshold=128,variance=-1,back=0,backSum=0;
-    for(let t=0;t<256;t++){back+=hist[t];if(!back)continue;const fore=total-back;if(!fore)break;backSum+=t*hist[t];const diff=backSum/back-(sum-backSum)/fore;const score=back*fore*diff*diff;if(score>variance){variance=score;threshold=t;}}
-    for(let i=0,j=0;i<image.data.length;i+=4,j++){
-      const g=mode==='gray'?gray[j]:mode==='binary'?(gray[j]<threshold?0:255):(gray[j]<threshold?255:0);
-      image.data[i]=image.data[i+1]=image.data[i+2]=g;image.data[i+3]=255;
+  // Called without awaiting when camera becomes ready. First capture can take longer on a cold phone.
+  window.warmUniversalOCR=()=>{warmTesseract().catch(()=>{});};
+
+  function runs(active,minWidth){
+    const result=[];let start=-1;
+    for(let i=0;i<=active.length;i++){
+      if(i<active.length&&active[i]){if(start<0)start=i;}
+      else if(start>=0){if(i-start>=minWidth)result.push({start,end:i-1,width:i-start});start=-1;}
     }
-    ctx.putImageData(image,0,0);return canvas;
+    return result;
   }
-  function candidatesFrom(text,confidence=0.5,engine='ocr'){
-    if(!text)return [];
-    let raw=String(text).replace(/kg/gi,'').replace(/[，,]/g,'.').replace(/[：:;]/g,'.');
-    if(/\d/.test(raw))raw=raw.replace(/[OoQD]/g,'0').replace(/[Il|!]/g,'1').replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Gg]/g,'6');
-    raw=raw.replace(/\b(\d)\s+(\d{3})\b/g,'$1.$2').replace(/\s+/g,' ').trim();
-    const results=[];
-    const regex=/(?:^|[^\d.])(\d{1,4}(?:\.\d{1,3})?)(?![\d.])/g;
-    for(const found of raw.matchAll(regex)){
-      let display=found[1];
-      if(/^0\d{3}$/.test(display))display=`0.${display.slice(1)}`;
-      const value=Number(display);
-      if(!Number.isFinite(value)||value<=0||value>=10000)continue;
-      results.push({display,value,confidence:Math.max(0,Math.min(1,Number(confidence)||0)),engine});
+  function fastAttempt(gray,w,h,threshold,bright){
+    const mask=new Uint8Array(w*h);
+    for(let i=0;i<mask.length;i++)mask[i]=bright?(gray[i]>threshold?1:0):(gray[i]<threshold?1:0);
+    const upper=Math.floor(h*.065),lower=Math.ceil(h*.94);
+    const active=new Uint8Array(w);
+    const required=Math.max(2,(lower-upper)*.022);
+    for(let x=0;x<w;x++){
+      let pixels=0;for(let y=upper;y<lower;y++)pixels+=mask[y*w+x];
+      if(pixels>=required)active[x]=1;
     }
-    return results;
+    // Bridge only tiny antialiasing gaps inside a digit.
+    for(let i=1;i<w-3;i++){
+      if(!active[i-1]||active[i])continue;
+      let end=i;while(end<Math.min(w,i+4)&&!active[end])end++;
+      if(end<w&&end-i<=3&&active[end])active.fill(1,i,end);
+    }
+    const raw=runs(active,Math.max(3,Math.round(w*.006)));
+    const candidates=[];
+    for(const r of raw){
+      let top=h,bottom=-1,count=0;
+      for(let x=r.start;x<=r.end;x++)for(let y=upper;y<lower;y++)if(mask[y*w+x]){
+        if(y<top)top=y;if(y>bottom)bottom=y;count++;
+      }
+      if(count)candidates.push({...r,top,bottom,height:bottom-top+1});
+    }
+    const digits=candidates.filter(r=>r.height>=h*.46&&r.width>=h*.11);
+    if(digits.length<4||digits.length>6)return null;
+    const firstTop=Math.min(...digits.map(r=>r.top));
+    const lastBottom=Math.max(...digits.map(r=>r.bottom))+1;
+    const glyphHeight=lastBottom-firstTop;
+    const dotCandidates=candidates.filter(r=>!digits.includes(r)&&r.height<=glyphHeight*.29&&r.top>=firstTop+glyphHeight*.57&&r.width<=glyphHeight*.19);
+    let dotIndex=-1;
+    for(let i=0;i<digits.length-1;i++){
+      if(dotCandidates.some(dot=>dot.start>digits[i].end&&dot.end<digits[i+1].start)){
+        if(dotIndex!==-1)return null;
+        dotIndex=i;
+      }
+    }
+    if(dotIndex<0||digits.length-dotIndex-1!==3)return null;
+    let text='',minMargin=1;
+    for(let i=0;i<digits.length;i++){
+      const d=digits[i],left=d.start,right=d.end+1,wd=right-left;
+      let bits='';
+      for(const [xa,xb,ya,yb] of SEGMENTS){
+        const x0=Math.floor(left+xa*wd),x1=Math.max(x0+1,Math.ceil(left+xb*wd));
+        const y0=Math.floor(firstTop+ya*glyphHeight),y1=Math.max(y0+1,Math.ceil(firstTop+yb*glyphHeight));
+        let ink=0;
+        for(let yy=y0;yy<y1;yy++)for(let xx=x0;xx<x1;xx++)ink+=mask[yy*w+xx];
+        const density=ink/Math.max(1,(y1-y0)*(x1-x0));
+        bits+=density>.22?'1':'0';
+        minMargin=Math.min(minMargin,Math.abs(density-.22));
+      }
+      const digit=Object.keys(PATTERNS).find(key=>PATTERNS[key]===bits);
+      if(digit===undefined)return null;
+      text+=digit;
+      if(i===dotIndex)text+='.';
+    }
+    if(!EXACT.test(text)||minMargin<.007)return null;
+    return {display:text,margin:minMargin};
   }
-  function choosePrecise(candidates){
-    // A 2-decimal recognition is incomplete for this three-decimal scale. Never append a guessed digit.
-    const precise=candidates.filter(c=>THREE_DECIMALS.test(c.display));
-    if(!precise.length)return null;
-    const groups=new Map();
-    for(const c of precise){if(!groups.has(c.display))groups.set(c.display,[]);groups.get(c.display).push(c);}
-    const ranked=[...groups].map(([display,items])=>{
-      const best=Math.max(...items.map(i=>i.confidence));
-      const sources=new Set(items.map(i=>i.engine)).size;
-      return {display,best,sources,score:best+Math.min(.30,(sources-1)*.1)};
-    }).sort((a,b)=>b.score-a.score);
-    const first=ranked[0],second=ranked[1];
-    // Single recognition needs high confidence; multiple preprocessing views must agree otherwise.
-    if(first.best<.65 || (first.sources<2&&first.best<.87))return null;
-    if(second&&first.score-second.score<.16)return null;
-    return first;
+  function fastDigits(source){
+    const w=640,h=Math.max(160,Math.round(w*source.height/source.width));
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const ctx=c.getContext('2d',{willReadFrequently:true});
+    ctx.drawImage(source,0,0,w,h);
+    const rgba=ctx.getImageData(0,0,w,h).data,gray=new Uint8Array(w*h),hist=new Uint32Array(256);
+    let borderTotal=0,borderCount=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const index=y*w+x,p=index*4;
+      const value=Math.round(.299*rgba[p]+.587*rgba[p+1]+.114*rgba[p+2]);
+      gray[index]=value;hist[value]++;
+      if(x<w*.04||x>w*.96||y<h*.04||y>h*.96){borderTotal+=value;borderCount++;}
+    }
+    function percentile(t){let sum=0;for(let i=0;i<256;i++){sum+=hist[i];if(sum>=w*h*t)return i;}return 255;}
+    const low=percentile(.08),high=percentile(.92);
+    if(high-low<48)return null;
+    const bright=borderTotal/Math.max(1,borderCount)<(low+high)/2;
+    const first=fastAttempt(gray,w,h,Math.round(low*.27+high*.73),bright);
+    const second=fastAttempt(gray,w,h,Math.round(low*.21+high*.79),bright);
+    // Require the same complete four-plus digit result at both thresholds.
+    return first&&second&&first.display===second.display?first.display:null;
   }
-  function collectPaddle(results,images){
+  function cleaned(raw){
+    let text=String(raw||'').replace(/kg/ig,'').replace(/[，,]/g,'.').trim();
+    if(/\d/.test(text))text=text.replace(/[OoQD]/g,'0').replace(/[Il|!]/g,'1').replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Gg]/g,'6');
+    text=text.replace(/\b(\d)\s+(\d{3})\b/g,'$1.$2');
+    return text;
+  }
+  function candidates(data){
     const out=[];
-    (results||[]).forEach((result,index)=>{
-      const items=Array.isArray(result?.items)?result.items:[];
-      const joined=items.map(i=>i.text||'').join(' ');
-      if(joined){const avg=items.length?items.reduce((sum,item)=>sum+(Number(item.score)||0),0)/items.length:.3;out.push(...candidatesFrom(joined,avg,`paddle-joined-${index}`));}
-      for(const item of items)out.push(...candidatesFrom(item.text,item.score,`paddle-${index}`));
-    });
+    const add=(value,confidence)=>{
+      const text=cleaned(value);
+      // Reject ambiguous 2-decimal readings; don't repair or invent a last digit.
+      const matches=text.match(/(?:^|[^\d.])\d{1,3}\.\d{3}(?![\d.])/g)||[];
+      for(const match of matches){
+        const display=(match.match(/\d{1,3}\.\d{3}$/)||[])[0];
+        if(display&&Number(display)>0)out.push({display,confidence:confidence||0});
+      }
+    };
+    add(data?.text,(Number(data?.confidence)||0)/100);
+    for(const word of data?.words||[])add(word.text,(Number(word.confidence??word.conf)||0)/100);
     return out;
   }
-  async function readWeight(photo,token){
-    const images=['original','gray','binary','invert'].map(mode=>variant(photo,mode));
-    let candidates=[];
-    try{
-      const model=await loadPaddle();if(token!==session)return null;
-      status('Sedang Dibaca AI',true);
-      candidates.push(...collectPaddle(await model.predict(images,{textDetLimitSideLen:960,textDetLimitType:'max',textDetThresh:.22,textDetBoxThresh:.30,textDetUnclipRatio:1.25,textRecScoreThresh:.15}),images));
-      if(token!==session)return null;
-      const first=choosePrecise(candidates);if(first)return first;
-    }catch(err){console.warn('Primary local OCR failed:',err);}
-    if(token!==session)return null;
-    try{
-      const worker=await loadTesseract();if(token!==session)return null;
-      for(let i=0;i<2;i++){
-        status('Sedang Dibaca AI',true);
-        const image=images[i===0?0:2],recognized=await worker.recognize(image);
-        if(token!==session)return null;
-        const data=recognized?.data||{};const confidence=(Number(data.confidence)||0)/100;
-        candidates.push(...candidatesFrom(data.text,confidence,`tesseract-${i}`));
-        for(const word of data.words||[])candidates.push(...candidatesFrom(word.text,(Number(word.confidence??word.conf)||0)/100,`tesseract-word-${i}`));
-      }
-    }catch(err){console.warn('Fallback local OCR failed:',err);}
-    return token===session?choosePrecise(candidates):null;
+  function choose(items){
+    const groups=new Map();
+    for(const item of items){const group=groups.get(item.display)||[];group.push(item);groups.set(item.display,group);}
+    const ranked=[...groups].map(([display,group])=>({display,confidence:Math.max(...group.map(v=>v.confidence)),count:group.length})).sort((a,b)=>b.confidence-a.confidence);
+    if(!ranked.length)return null;
+    if(ranked.length>1&&ranked[0].confidence-ranked[1].confidence<.2)return null;
+    return ranked[0].confidence>=.80?ranked[0].display:null;
   }
-  function capturedUI(){
-    const capture=$('btn-capture');if(capture)capture.style.display='none';
-    const preview=$('capture-preview');if(preview){preview.hidden=false;preview.style.display='block';}
-    if($('scan-line'))$('scan-line').style.display='none';
+  function binary(source){
+    const c=document.createElement('canvas');c.width=900;c.height=Math.max(200,Math.round(source.height/source.width*900));
+    const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,c.width,c.height);
+    const img=ctx.getImageData(0,0,c.width,c.height);
+    for(let i=0;i<img.data.length;i+=4){const g=Math.round(.299*img.data[i]+.587*img.data[i+1]+.114*img.data[i+2]);const v=g>165?255:0;img.data[i]=img.data[i+1]=img.data[i+2]=v;}
+    ctx.putImageData(img,0,0);return c;
+  }
+  async function readWeight(photo,token){
+    // Fast specialized decoder first (no neural-network download or worker wait).
+    const seven=fastDigits(photo);
+    if(seven)return seven;
+    const tess=await warmTesseract();if(token!==session)return null;
+    const scaled=document.createElement('canvas');scaled.width=900;scaled.height=Math.max(200,Math.round(photo.height/photo.width*900));
+    scaled.getContext('2d').drawImage(photo,0,0,scaled.width,scaled.height);
+    status('Sedang Dibaca AI',true);
+    const first=await tess.recognize(scaled);if(token!==session)return null;
+    let seen=candidates(first.data);
+    const initial=choose(seen);if(initial)return initial;
+    status('Sedang Dibaca AI',true);
+    const second=await tess.recognize(binary(photo));if(token!==session)return null;
+    seen=seen.concat(candidates(second.data));
+    // Two separate passes must agree if neither was confident on its own.
+    const count=new Map();for(const item of seen)count.set(item.display,(count.get(item.display)||0)+1);
+    const agreed=[...count].filter(([,n])=>n>=2);
+    if(agreed.length===1)return agreed[0][0];
+    return choose(seen);
   }
   function fallback(){
-    status('Tiga digit di belakang koma belum terbaca dengan pasti. Periksa foto, lalu input berat manual atau ambil ulang.',false);
-    const manual=$('btn-manual');if(manual){manual.style.display='flex';manual.textContent='⌨️ Input Manual';}
+    status('Angka belum terbaca pasti. Coba ambil ulang atau input berat manual.',false);
+    if($('btn-manual')){$('btn-manual').style.display='flex';$('btn-manual').textContent='⌨️ Input Manual';}
     if($('btn-lanjut'))$('btn-lanjut').style.display='none';
-    const retake=$('btn-retake-v19');
-    if(retake){$('camera-ui')?.querySelector('.scanner-actions')?.classList.add('success-v19');retake.style.display='flex';}
+    const retry=$('btn-retake-v19');
+    if(retry){$('camera-ui')?.querySelector('.scanner-actions')?.classList.add('success-v19');retry.style.display='flex';}
   }
   window.ambilGambarTimbangan=async function(){
     ensureUI();if(busy)return;
     const scanner=window.localScanner||((typeof localScanner!=='undefined')?localScanner:null);
-    if(!scanner||typeof scanner.drawCrop!=='function'){
-      status('Kamera belum siap. Coba lagi atau input manual.',false);
-      if($('btn-manual'))$('btn-manual').style.display='block';return;
-    }
+    if(!scanner||typeof scanner.drawCrop!=='function'){status('Kamera belum siap. Coba lagi atau gunakan input manual.');return;}
     busy=true;const token=++session;
     try{
-      const box=$('scanner-box');const ratio=box.clientHeight/Math.max(1,box.clientWidth);
-      const photo=document.createElement('canvas');photo.width=1400;photo.height=Math.max(1,Math.round(photo.width*ratio));
+      const box=$('scanner-box');
+      const photo=document.createElement('canvas');photo.width=1100;
+      photo.height=Math.max(1,Math.round(photo.width*box.clientHeight/Math.max(1,box.clientWidth)));
       if(!scanner.drawCrop(photo,photo.width,photo.height)){if(token===session)fallback();return;}
-      captured=photo;
-      const preview=$('capture-preview');if(preview){preview.width=photo.width;preview.height=photo.height;preview.getContext('2d').drawImage(photo,0,0);}
-      try{$('kamera-video')?.pause();}catch(_){}
-      try{scanner.stop();}catch(_){}
-      capturedUI();status('Sedang Dibaca AI',true);
-      const result=await readWeight(photo,token);
+      const preview=$('capture-preview');
+      if(preview){preview.width=photo.width;preview.height=photo.height;preview.getContext('2d').drawImage(photo,0,0);preview.hidden=false;preview.style.display='block';}
+      try{$('kamera-video')?.pause();scanner.stop();}catch(_){}
+      if($('btn-capture'))$('btn-capture').style.display='none';
+      if($('scan-line'))$('scan-line').style.display='none';
+      status('Sedang Dibaca AI',true);
+      const weight=await readWeight(photo,token);
       if(token!==session)return;
-      if(!result){fallback();return;}
-      // Keep the OCR display text exactly (including any trailing zero), no toFixed(2) or rounding.
-      window.suksesScan?.(result.display,'lokal');
-      status('Berat terbaca. Periksa tiga digit desimal sebelum menyimpan.',false);
+      if(!weight){fallback();return;}
+      window.suksesScan?.(weight,'lokal');
+      status('Berat terbaca. Periksa angka sebelum menyimpan.',false);
       if($('btn-manual'))$('btn-manual').style.display='flex';
       if($('btn-lanjut'))$('btn-lanjut').style.display='block';
-    }catch(err){console.error('Photo OCR failed:',err);if(token===session)fallback();}
+    }catch(err){console.warn('Weight recognition:',err);if(token===session)fallback();}
     finally{if(token===session)busy=false;}
   };
-  // Other camera modules set their own opener on load. Reset is therefore exposed and
-  // explicitly invoked from camera_fix_v18.js rather than relying on wrapping order.
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureUI,{once:true});else ensureUI();
 })();
