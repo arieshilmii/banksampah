@@ -12,4 +12,4 @@ document.write('<script src="ui_camera_v19.js?v=2503"><\/script>');
 document.write('<script src="ui_camera_v20.js?v=2503"><\/script>');
 document.write('<script src="ui_status_v21.js?v=2503"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2503"><\/script>');
-document.write('<script src="ui_shell_v25.js?v=2503"><\/script>');
+document.write('<script src="ui_shell_v25.js?v=2504"><\/script>');
