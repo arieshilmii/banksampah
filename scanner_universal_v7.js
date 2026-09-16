@@ -102,9 +102,23 @@
       }
     }
     if(dotIndex<0||digits.length-dotIndex-1!==3)return null;
+    const widths=digits.map(d=>d.width).sort((a,b)=>a-b);
+    const typicalWidth=widths[Math.floor(widths.length/2)];
     let text='',minMargin=1;
     for(let i=0;i<digits.length;i++){
       const d=digits[i],left=d.start,right=d.end+1,wd=right-left;
+      // In seven-segment fonts, '1' is two thin vertical bars in a narrow glyph.
+      // Sampling seven positions relative to that narrow bounding box makes its
+      // vertical bars look like horizontal segments, falsely producing '5'.
+      // Recognize the distinctive tall, narrow geometry before the segment grid.
+      const narrowOne=d.height>=glyphHeight*.73 && (
+        wd<=glyphHeight*.23 || (wd<=glyphHeight*.30&&wd<typicalWidth*.48)
+      );
+      if(narrowOne){
+        text+='1';
+        if(i===dotIndex)text+='.';
+        continue;
+      }
       let bits='';
       for(const [xa,xb,ya,yb] of SEGMENTS){
         const x0=Math.floor(left+xa*wd),x1=Math.max(x0+1,Math.ceil(left+xb*wd));
@@ -136,8 +150,7 @@
     const low=percentile(.08),high=percentile(.92);
     if(high-low<48)return null;
     const bright=borderTotal/Math.max(1,borderCount)<(low+high)/2;
-    // A noisy high threshold may fail while several lower ones read correctly.
-    // Require two independent thresholds to agree, not every threshold to pass.
+    // Require agreement among independent thresholds, not every threshold to pass.
     const votes=new Map();
     for(const ratio of [.32,.40,.48,.56,.64,.73,.79]){
       const threshold=Math.round(low*(1-ratio)+high*ratio);
