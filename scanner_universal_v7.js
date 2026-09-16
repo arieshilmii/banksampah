@@ -1,5 +1,5 @@
-// Bank Sampah OCR: fast seven-segment reading, with a warm/reusable Tesseract fallback.
-// Never infer a missing decimal digit; every automatic result must contain 3 decimal places.
+// Bank Sampah OCR: compact seven-segment reader, reusable Tesseract fallback.
+// Never infer missing digits; automatic readings must have three decimal places.
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
@@ -13,8 +13,8 @@
     if($('spinner'))$('spinner').style.display=loading?'block':'none';
   }
   function ensureUI(){
-    const actions=$('camera-ui')?.querySelector('.scanner-actions');
-    const box=$('scanner-box');if(!actions||!box)return;
+    const actions=$('camera-ui')?.querySelector('.scanner-actions'),box=$('scanner-box');
+    if(!actions||!box)return;
     if(!$('btn-capture')){
       const b=document.createElement('button');b.id='btn-capture';b.type='button';
       b.style.cssText='position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);width:calc(100% - 40px);max-width:320px;z-index:14000;border:0;border-radius:28px;padding:15px 18px;background:#20d979;color:#052315;font-weight:850;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.34);cursor:pointer';
@@ -22,8 +22,7 @@
     }
     if(!$('capture-preview')){
       const canvas=document.createElement('canvas');canvas.id='capture-preview';canvas.hidden=true;
-      canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:none;border-radius:12px;z-index:3;background:#fff';
-      box.appendChild(canvas);
+      canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:none;border-radius:12px;z-index:3;background:#fff';box.appendChild(canvas);
     }
     if($('scanner-tip'))$('scanner-tip').textContent='Arahkan tiga angka desimal ke dalam bingkai. Periksa berat sebelum menyimpan.';
   }
@@ -44,25 +43,17 @@
     workerPromise=(async()=>{
       if(!window.Tesseract){
         await new Promise((resolve,reject)=>{
-          const script=document.createElement('script');
-          script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-          script.onload=resolve;script.onerror=()=>reject(new Error('Tesseract script unavailable'));
-          document.head.appendChild(script);
+          const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+          script.onload=resolve;script.onerror=()=>reject(new Error('Tesseract script unavailable'));document.head.appendChild(script);
         });
       }
       const w=await window.Tesseract.createWorker('eng',1);
-      await w.setParameters({
-        tessedit_char_whitelist:'0123456789.,',
-        tessedit_pageseg_mode:window.Tesseract.PSM?.SINGLE_LINE||'7',
-        preserve_interword_spaces:'0'
-      });
+      await w.setParameters({tessedit_char_whitelist:'0123456789.,',tessedit_pageseg_mode:window.Tesseract.PSM?.SINGLE_LINE||'7',preserve_interword_spaces:'0'});
       worker=w;return worker;
     })().catch(err=>{workerPromise=null;console.warn('Tesseract initialization:',err);throw err;});
     return workerPromise;
   }
-  // Called without awaiting when camera becomes ready. First capture can take longer on a cold phone.
   window.warmUniversalOCR=()=>{warmTesseract().catch(()=>{});};
-
   function runs(active,minWidth){
     const result=[];let start=-1;
     for(let i=0;i<=active.length;i++){
@@ -74,22 +65,19 @@
   function fastAttempt(gray,w,h,threshold,bright){
     const mask=new Uint8Array(w*h);
     for(let i=0;i<mask.length;i++)mask[i]=bright?(gray[i]>threshold?1:0):(gray[i]<threshold?1:0);
-    const upper=Math.floor(h*.065),lower=Math.ceil(h*.94);
-    const active=new Uint8Array(w);
+    const upper=Math.floor(h*.065),lower=Math.ceil(h*.94),active=new Uint8Array(w);
     const required=Math.max(2,(lower-upper)*.022);
     for(let x=0;x<w;x++){
       let pixels=0;for(let y=upper;y<lower;y++)pixels+=mask[y*w+x];
       if(pixels>=required)active[x]=1;
     }
-    // Bridge only tiny antialiasing gaps inside a digit.
     for(let i=1;i<w-3;i++){
       if(!active[i-1]||active[i])continue;
       let end=i;while(end<Math.min(w,i+4)&&!active[end])end++;
       if(end<w&&end-i<=3&&active[end])active.fill(1,i,end);
     }
-    const raw=runs(active,Math.max(3,Math.round(w*.006)));
     const candidates=[];
-    for(const r of raw){
+    for(const r of runs(active,Math.max(3,Math.round(w*.006)))){
       let top=h,bottom=-1,count=0;
       for(let x=r.start;x<=r.end;x++)for(let y=upper;y<lower;y++)if(mask[y*w+x]){
         if(y<top)top=y;if(y>bottom)bottom=y;count++;
@@ -98,13 +86,17 @@
     }
     const digits=candidates.filter(r=>r.height>=h*.46&&r.width>=h*.11);
     if(digits.length<4||digits.length>6)return null;
-    const firstTop=Math.min(...digits.map(r=>r.top));
-    const lastBottom=Math.max(...digits.map(r=>r.bottom))+1;
+    // The median ignores stray captions or borders attached to a single digit.
+    const sortedTop=digits.map(d=>d.top).sort((a,b)=>a-b);
+    const sortedBottom=digits.map(d=>d.bottom).sort((a,b)=>a-b);
+    const firstTop=sortedTop[Math.floor(digits.length/2)];
+    const lastBottom=sortedBottom[Math.floor(digits.length/2)]+1;
     const glyphHeight=lastBottom-firstTop;
-    const dotCandidates=candidates.filter(r=>!digits.includes(r)&&r.height<=glyphHeight*.29&&r.top>=firstTop+glyphHeight*.57&&r.width<=glyphHeight*.19);
+    if(glyphHeight<h*.35)return null;
+    const dots=candidates.filter(r=>!digits.includes(r)&&r.height<=glyphHeight*.29&&r.top>=firstTop+glyphHeight*.57&&r.width<=glyphHeight*.19);
     let dotIndex=-1;
     for(let i=0;i<digits.length-1;i++){
-      if(dotCandidates.some(dot=>dot.start>digits[i].end&&dot.end<digits[i+1].start)){
+      if(dots.some(dot=>dot.start>digits[i].end&&dot.end<digits[i+1].start)){
         if(dotIndex!==-1)return null;
         dotIndex=i;
       }
@@ -120,22 +112,18 @@
         let ink=0;
         for(let yy=y0;yy<y1;yy++)for(let xx=x0;xx<x1;xx++)ink+=mask[yy*w+xx];
         const density=ink/Math.max(1,(y1-y0)*(x1-x0));
-        bits+=density>.22?'1':'0';
-        minMargin=Math.min(minMargin,Math.abs(density-.22));
+        bits+=density>.22?'1':'0';minMargin=Math.min(minMargin,Math.abs(density-.22));
       }
       const digit=Object.keys(PATTERNS).find(key=>PATTERNS[key]===bits);
       if(digit===undefined)return null;
-      text+=digit;
-      if(i===dotIndex)text+='.';
+      text+=digit;if(i===dotIndex)text+='.';
     }
-    if(!EXACT.test(text)||minMargin<.007)return null;
-    return {display:text,margin:minMargin};
+    return EXACT.test(text)&&minMargin>=.007?text:null;
   }
   function fastDigits(source){
     const w=640,h=Math.max(160,Math.round(w*source.height/source.width));
     const c=document.createElement('canvas');c.width=w;c.height=h;
-    const ctx=c.getContext('2d',{willReadFrequently:true});
-    ctx.drawImage(source,0,0,w,h);
+    const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,w,h);
     const rgba=ctx.getImageData(0,0,w,h).data,gray=new Uint8Array(w*h),hist=new Uint32Array(256);
     let borderTotal=0,borderCount=0;
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
@@ -148,23 +136,26 @@
     const low=percentile(.08),high=percentile(.92);
     if(high-low<48)return null;
     const bright=borderTotal/Math.max(1,borderCount)<(low+high)/2;
-    const first=fastAttempt(gray,w,h,Math.round(low*.27+high*.73),bright);
-    const second=fastAttempt(gray,w,h,Math.round(low*.21+high*.79),bright);
-    // Require the same complete four-plus digit result at both thresholds.
-    return first&&second&&first.display===second.display?first.display:null;
+    // A noisy high threshold may fail while several lower ones read correctly.
+    // Require two independent thresholds to agree, not every threshold to pass.
+    const votes=new Map();
+    for(const ratio of [.32,.40,.48,.56,.64,.73,.79]){
+      const threshold=Math.round(low*(1-ratio)+high*ratio);
+      const result=fastAttempt(gray,w,h,threshold,bright);
+      if(result)votes.set(result,(votes.get(result)||0)+1);
+    }
+    const valid=[...votes].filter(([,count])=>count>=2);
+    return votes.size===1&&valid.length===1?valid[0][0]:null;
   }
   function cleaned(raw){
     let text=String(raw||'').replace(/kg/ig,'').replace(/[，,]/g,'.').trim();
     if(/\d/.test(text))text=text.replace(/[OoQD]/g,'0').replace(/[Il|!]/g,'1').replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Gg]/g,'6');
-    text=text.replace(/\b(\d)\s+(\d{3})\b/g,'$1.$2');
-    return text;
+    return text.replace(/\b(\d)\s+(\d{3})\b/g,'$1.$2');
   }
   function candidates(data){
     const out=[];
     const add=(value,confidence)=>{
-      const text=cleaned(value);
-      // Reject ambiguous 2-decimal readings; don't repair or invent a last digit.
-      const matches=text.match(/(?:^|[^\d.])\d{1,3}\.\d{3}(?![\d.])/g)||[];
+      const matches=cleaned(value).match(/(?:^|[^\d.])\d{1,3}\.\d{3}(?![\d.])/g)||[];
       for(const match of matches){
         const display=(match.match(/\d{1,3}\.\d{3}$/)||[])[0];
         if(display&&Number(display)>0)out.push({display,confidence:confidence||0});
@@ -190,9 +181,7 @@
     ctx.putImageData(img,0,0);return c;
   }
   async function readWeight(photo,token){
-    // Fast specialized decoder first (no neural-network download or worker wait).
-    const seven=fastDigits(photo);
-    if(seven)return seven;
+    const seven=fastDigits(photo);if(seven)return seven;
     const tess=await warmTesseract();if(token!==session)return null;
     const scaled=document.createElement('canvas');scaled.width=900;scaled.height=Math.max(200,Math.round(photo.height/photo.width*900));
     scaled.getContext('2d').drawImage(photo,0,0,scaled.width,scaled.height);
@@ -203,7 +192,6 @@
     status('Sedang Dibaca AI',true);
     const second=await tess.recognize(binary(photo));if(token!==session)return null;
     seen=seen.concat(candidates(second.data));
-    // Two separate passes must agree if neither was confident on its own.
     const count=new Map();for(const item of seen)count.set(item.display,(count.get(item.display)||0)+1);
     const agreed=[...count].filter(([,n])=>n>=2);
     if(agreed.length===1)return agreed[0][0];
@@ -222,8 +210,7 @@
     if(!scanner||typeof scanner.drawCrop!=='function'){status('Kamera belum siap. Coba lagi atau gunakan input manual.');return;}
     busy=true;const token=++session;
     try{
-      const box=$('scanner-box');
-      const photo=document.createElement('canvas');photo.width=1100;
+      const box=$('scanner-box'),photo=document.createElement('canvas');photo.width=1100;
       photo.height=Math.max(1,Math.round(photo.width*box.clientHeight/Math.max(1,box.clientWidth)));
       if(!scanner.drawCrop(photo,photo.width,photo.height)){if(token===session)fallback();return;}
       const preview=$('capture-preview');
