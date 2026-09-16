@@ -7,8 +7,9 @@
     if($('spinner'))$('spinner').style.display=spinner?'block':'none';
   }
   function clearPreviousCapture(){
-    // The OCR module owns its session counter and cached photo.
-    if(typeof window.resetUniversalCapture==='function')window.resetUniversalCapture();
+    // Invalidate old asynchronous OCR and discard the old preview AND measured value.
+    window.resetUniversalCapture?.();
+    try{beratTerbaca=0;beratTeksTerbaca='';}catch(_){}
     const preview=$('capture-preview');
     if(preview){preview.style.display='none';preview.hidden=true;const ctx=preview.getContext('2d');if(ctx)ctx.clearRect(0,0,preview.width,preview.height);}
     const box=$('scanner-box');if(box)box.classList.remove('photo-captured');
@@ -70,7 +71,10 @@
         if($('btn-torch'))$('btn-torch').style.display='none';
         if(typeof window.ScaleLocalScanner==='function'){
           try{
-            const scanner=new window.ScaleLocalScanner({video,scannerBox:$('scanner-box'),workCanvas:$('canvas-local'),onStatus:()=>{},onFallback:()=>{},onReading:value=>window.suksesScan?.(value,'lokal')});
+            const scanner=new window.ScaleLocalScanner({video,scannerBox:$('scanner-box'),workCanvas:$('canvas-local'),onStatus:()=>{},onFallback:()=>{},onReading:value=>{
+              // Never let the dormant legacy reader bypass the three-decimal OCR rule.
+              if(/^\d+\.\d{3}$/.test(String(value).replace(',','.')))window.suksesScan?.(value,'lokal');
+            }});
             window.localScanner=scanner;try{localScanner=scanner;}catch(_){}
             scanner.stop();
           }catch(err){console.warn('Scanner initialization skipped:',err);}
