@@ -45,6 +45,8 @@
     btn.style.display='block';btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';
     btn.textContent=retry?'↻ Coba Kamera Lagi':'📸 Ambil Gambar';
     btn.onclick=retry?()=>window.mulaiKamera(window.jenisSampahAktif||'Sampah'):()=>window.ambilGambarTimbangan?.();
+    // Warm the single Tesseract worker while the user aims the camera, not after taking a photo.
+    if(!retry)window.warmUniversalOCR?.();
   }
   function install(){
     window.mulaiKamera=async function(namaSampah){
