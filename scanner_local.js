@@ -16,3 +16,4 @@ document.write('<script src="ui_camera_v20.js?v=2001"><\/script>');
 document.write('<script src="ui_status_v21.js?v=2101"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2201"><\/script>');
 document.write('<script src="ui_portal_fix_v23.js?v=2301"><\/script>');
+document.write('<script src="ui_nav_final_v24.js?v=2401"><\/script>');
