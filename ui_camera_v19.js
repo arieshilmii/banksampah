@@ -1,8 +1,7 @@
-// Camera result actions only. Browser navigation is managed centrally in ui_shell_v25.js.
+// Result buttons: retain the existing OCR and save functions. Back routing lives in ui_shell_v25.js.
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
-
   function installStyle(){
     if($('camera-v19-style'))return;
     const style=document.createElement('style');style.id='camera-v19-style';
@@ -15,48 +14,50 @@
       #camera-ui .scanner-actions:not(.success-v19) #btn-retake-v19{display:none!important}
     `;document.head.appendChild(style);
   }
-
   function clearResultActions(){
     $('camera-ui')?.querySelector('.scanner-actions')?.classList.remove('success-v19');
     const retake=$('btn-retake-v19');if(retake)retake.style.display='none';
   }
+  function clearPhoto(){
+    window.cancelUniversalCapture?.();
+    const photo=$('capture-preview');
+    if(photo){photo.style.display='none';photo.hidden=true;photo.getContext('2d')?.clearRect(0,0,photo.width,photo.height);}
+  }
   function retake(){
-    clearResultActions();
-    ['ai-result','btn-lanjut','btn-manual'].forEach(id=>{const el=$(id);if(el)el.style.display='none'});
-    const name=window.jenisSampahAktif||'';
-    if(name&&typeof window.mulaiKamera==='function')window.mulaiKamera(name);
+    clearPhoto();clearResultActions();
+    ['ai-result','btn-lanjut','btn-manual'].forEach(id=>{const el=$(id);if(el)el.style.display='none';});
+    const waste=window.jenisSampahAktif||'';
+    if(waste&&typeof window.mulaiKamera==='function')window.mulaiKamera(waste);
   }
   function ensureRetake(){
-    const actions=$('camera-ui')?.querySelector('.scanner-actions');if(!actions)return;
-    if($('btn-retake-v19'))return;
-    const b=document.createElement('button');b.id='btn-retake-v19';b.type='button';b.className='btn-action-manual';
-    b.textContent='↻ Ambil Ulang';b.addEventListener('click',retake);actions.appendChild(b);
+    const actions=$('camera-ui')?.querySelector('.scanner-actions');if(!actions||$('btn-retake-v19'))return;
+    const button=document.createElement('button');button.id='btn-retake-v19';button.type='button';button.className='btn-action-manual';
+    button.textContent='↻ Ambil Ulang';button.addEventListener('click',retake);actions.appendChild(button);
   }
   function markResultActions(){
     const actions=$('camera-ui')?.querySelector('.scanner-actions');if(!actions)return;
     ensureRetake();actions.classList.add('success-v19');
-    const manual=$('btn-manual');if(manual){manual.style.display='flex';manual.textContent='⌨️ Input Manual'}
-    const retake=$('btn-retake-v19');if(retake)retake.style.display='flex';
+    const manual=$('btn-manual');if(manual){manual.style.display='flex';manual.textContent='⌨️ Input Manual';}
+    if($('btn-retake-v19'))$('btn-retake-v19').style.display='flex';
   }
   function wrapActions(){
     if(typeof window.mulaiKamera==='function'&&!window.mulaiKamera.__resultActionsV19){
       const original=window.mulaiKamera;
-      const wrapped=function(){clearResultActions();return original.apply(this,arguments)};
+      const wrapped=function(){clearResultActions();return original.apply(this,arguments);};
       wrapped.__resultActionsV19=true;window.mulaiKamera=wrapped;
     }
     if(typeof window.suksesScan==='function'&&!window.suksesScan.__resultActionsV19){
       const original=window.suksesScan;
-      const wrapped=function(){const result=original.apply(this,arguments);setTimeout(markResultActions,0);return result};
+      const wrapped=function(){const result=original.apply(this,arguments);setTimeout(markResultActions,0);return result;};
       wrapped.__resultActionsV19=true;window.suksesScan=wrapped;
     }
     if(typeof window.tutupKamera==='function'&&!window.tutupKamera.__resultActionsV19){
       const original=window.tutupKamera;
-      const wrapped=function(){const result=original.apply(this,arguments);clearResultActions();return result};
+      const wrapped=function(){clearPhoto();const result=original.apply(this,arguments);clearResultActions();return result;};
       wrapped.__resultActionsV19=true;window.tutupKamera=wrapped;
     }
   }
-  function run(){installStyle();ensureRetake();wrapActions();}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
-  // Other modules may replace camera globals on window.load; rewrap once afterward.
+  function install(){installStyle();ensureRetake();wrapActions();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
   window.addEventListener('load',()=>setTimeout(wrapActions,20),{once:true});
 })();
