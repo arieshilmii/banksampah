@@ -1,4 +1,4 @@
-// Consolidated shell v25: single bottom navigation + admin entry point.
+// Consolidated shell v25: single bottom navigation, admin entry and mobile book layout.
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
@@ -53,6 +53,27 @@
       #admin-recycle-hit-v25{
         position:absolute!important;right:0!important;top:0!important;width:46px!important;height:46px!important;border:0!important;
         background:transparent!important;z-index:9!important;cursor:pointer!important;padding:0!important;
+      }
+      /* Buku Tabungan only: all four columns fit on one mobile viewport. Admin table is untouched. */
+      #portal-book-page{box-sizing:border-box!important;width:100%!important;max-width:100vw!important;overflow-x:hidden!important;padding-left:12px!important;padding-right:12px!important}
+      #portal-book-page .portal-wrap{width:100%!important;max-width:430px!important;min-width:0!important}
+      #portal-book-page .portal-table-wrap{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
+      #portal-book-page .portal-table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
+      #portal-book-page .portal-table th,#portal-book-page .portal-table td{
+        box-sizing:border-box!important;min-width:0!important;padding:11px 5px!important;
+        white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;vertical-align:top!important;
+        font-size:10px!important;line-height:1.35!important;
+      }
+      #portal-book-page .portal-table th{font-size:9px!important;line-height:1.2!important}
+      #portal-book-page .portal-table th:nth-child(1),#portal-book-page .portal-table td:nth-child(1){width:23%!important}
+      #portal-book-page .portal-table th:nth-child(2),#portal-book-page .portal-table td:nth-child(2){width:34%!important}
+      #portal-book-page .portal-table th:nth-child(3),#portal-book-page .portal-table td:nth-child(3){width:17%!important}
+      #portal-book-page .portal-table th:nth-child(4),#portal-book-page .portal-table td:nth-child(4){width:26%!important}
+      #portal-book-page .portal-table td:nth-child(3),#portal-book-page .portal-table td:nth-child(4){font-variant-numeric:tabular-nums!important}
+      @media(max-width:360px){
+        #portal-book-page{padding-left:8px!important;padding-right:8px!important}
+        #portal-book-page .portal-table th,#portal-book-page .portal-table td{padding:9px 3px!important;font-size:9px!important}
+        #portal-book-page .portal-table th{font-size:8px!important}
       }
       @media(min-width:700px){#clean-bottom-nav.shell-v25{bottom:14px!important}}
     `;
