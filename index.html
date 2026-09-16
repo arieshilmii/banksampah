@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="app-loading">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,14 +8,17 @@
   <style>
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#ecfaf6;color:#163c32}
+    html.app-loading body{visibility:hidden}
     body{display:flex;justify-content:center;align-items:flex-start;overflow-x:hidden}
     button,input{font:inherit}
-    #form-login{width:min(92vw,390px);margin:8vh auto;padding:24px;background:#fff;border-radius:24px;box-shadow:0 16px 45px rgba(20,80,62,.10)}
-    #form-login h2{margin:0 0 18px;text-align:center}
-    .form-group{position:relative;margin-bottom:14px}.form-group label{display:block;margin-bottom:6px;font-size:12px;font-weight:700}.form-group input{width:100%;padding:12px;border:1px solid #d7ece5;border-radius:14px;background:#f8fffc;color:#163c32}
-    #dropdown-list{position:absolute;left:0;right:0;top:100%;z-index:99;display:none;max-height:190px;overflow:auto;background:#fff;border:1px solid #d7ece5;border-radius:14px;box-shadow:0 12px 28px rgba(20,80,62,.12)}
+    #form-login{width:min(92vw,390px);max-width:390px;margin:8vh auto 40px;padding:28px 24px 24px;background:#fff;border:1px solid #d7ece5;border-radius:28px;box-shadow:0 18px 50px rgba(32,103,81,.10);color:#163c32;position:relative;z-index:5}
+    #form-login::before{content:'♻️';width:74px;height:74px;border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:linear-gradient(145deg,#d9f8ef,#bdeedc);font-size:34px;box-shadow:0 10px 24px rgba(22,185,138,.14)}
+    #form-login h2{margin:0 0 7px;text-align:center;font-size:23px;color:#163c32}
+    #form-login h2::after{content:'Atur profil sebelum mulai mencatat setoran sampah';display:block;margin-top:7px;font-size:12px;font-weight:500;color:#70847d}
+    .form-group{position:relative;margin-bottom:15px}.form-group label{display:block;margin-bottom:7px;font-size:12px;font-weight:750;color:#163c32}.form-group input{width:100%;padding:13px 14px;border:1px solid #d7ece5;border-radius:15px;background:#f8fffc;color:#163c32;outline:none}
+    #dropdown-list{position:absolute;left:0;right:0;top:100%;z-index:99;display:none;max-height:190px;overflow:auto;background:#fff;border:1px solid #d7ece5;border-radius:15px;box-shadow:0 14px 34px rgba(26,84,66,.14)}
     .dropdown-item{padding:10px 12px;border-bottom:1px solid #edf5f1;cursor:pointer}.item-nama{font-size:13px;font-weight:800}.item-unit{margin-top:2px;font-size:11px;color:#70847d}
-    .btn-submit{width:100%;padding:13px 16px;border:0;border-radius:15px;background:#16b98a;color:#fff;font-weight:800}
+    .btn-submit{width:100%;padding:14px 16px;border:0;border-radius:16px;background:#16b98a;color:#fff;font-weight:850;margin-top:7px}
     #halaman-beranda{display:none;width:100%;max-width:430px;min-height:100vh;padding:18px}
     .header-beranda{display:flex;flex-direction:column;gap:14px}.profile-section h2{margin:0}.profile-section p{margin:4px 0 0}.rekap-card{display:flex}.rekap-item{flex:1}.rekap-divider{width:1px}.search-beranda{width:100%}.category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cat-card{text-align:center;cursor:pointer}
     .modal-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:flex-end;justify-content:center;background:rgba(20,49,40,.42)}.modal-content{width:100%;max-width:430px;max-height:85vh;padding:18px;background:#f5fcf9;border-radius:28px 28px 0 0}.modal-header{display:flex;align-items:center;justify-content:space-between}.modal-close{border:0}.subcat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;overflow:auto}.subcat-card{padding:14px;background:#fff;border:1px solid #d7ece5;border-radius:18px;text-align:center;cursor:pointer}
@@ -25,33 +28,13 @@
 <body>
   <div id="form-login">
     <h2>Pengaturan Profil</h2>
-    <div class="form-group">
-      <label>Nama Pegawai (Ketik Nama / Kelurahan)</label>
-      <input type="text" id="input-nama" placeholder="Ketik pencarian..." autocomplete="off">
-      <div id="dropdown-list"></div>
-    </div>
-    <div class="form-group">
-      <label>Unit Kerja</label>
-      <input type="text" id="input-unit" placeholder="Otomatis terisi..." readonly>
-    </div>
+    <div class="form-group"><label>Nama Pegawai (Ketik Nama / Kelurahan)</label><input type="text" id="input-nama" placeholder="Ketik pencarian..." autocomplete="off"><div id="dropdown-list"></div></div>
+    <div class="form-group"><label>Unit Kerja</label><input type="text" id="input-unit" placeholder="Otomatis terisi..." readonly></div>
     <button class="btn-submit" type="button" onclick="simpanProfil()">Simpan & Lanjutkan</button>
   </div>
-
   <main id="halaman-beranda">
-    <div class="header-beranda">
-      <div class="profile-section">
-        <h2 id="teks-sapa">Halo, Pegawai</h2>
-        <p id="teks-unit">📍 Unit Kerja: -</p>
-      </div>
-      <div class="rekap-card">
-        <div class="rekap-item"><div class="rekap-label">Total Terkumpul</div><div class="rekap-value" id="teks-total">0 Kg</div></div>
-        <div class="rekap-divider"></div>
-        <div class="rekap-item"><div class="rekap-label">Terakhir Setor</div><div class="rekap-value" id="teks-terakhir">Belum ada</div></div>
-      </div>
-    </div>
-
+    <div class="header-beranda"><div class="profile-section"><h2 id="teks-sapa">Halo, Pegawai</h2><p id="teks-unit">📍 Unit Kerja: -</p></div><div class="rekap-card"><div class="rekap-item"><div class="rekap-label">Total Terkumpul</div><div class="rekap-value" id="teks-total">0 Kg</div></div><div class="rekap-divider"></div><div class="rekap-item"><div class="rekap-label">Terakhir Setor</div><div class="rekap-value" id="teks-terakhir">Belum ada</div></div></div></div>
     <input type="text" id="search-sampah" class="search-beranda" placeholder="Cari jenis sampah (misal: Kresek, Koran, PET)...">
-
     <div class="category-grid" id="category-grid">
       <div class="cat-card" onclick="bukaModal('Kertas & Karton')"><div class="cat-icon">📦</div><div class="cat-title">Kertas & Karton</div></div>
       <div class="cat-card" onclick="bukaModal('Plastik Botol')"><div class="cat-icon">🍾</div><div class="cat-title">Plastik Botol</div></div>
@@ -61,45 +44,26 @@
       <div class="cat-card" onclick="bukaModal('Organik & Lainnya')"><div class="cat-icon">🌱</div><div class="cat-title">Organik & Lainnya</div></div>
     </div>
   </main>
-
-  <div class="modal-overlay" id="modal-subkategori" onclick="tutupModal(event)">
-    <div class="modal-content">
-      <div class="modal-header"><h3 class="modal-title" id="modal-title">Kategori</h3><button class="modal-close" type="button" onclick="tutupModalPaksa()">✕</button></div>
-      <div class="subcat-grid" id="modal-list"></div>
-    </div>
-  </div>
-
+  <div class="modal-overlay" id="modal-subkategori" onclick="tutupModal(event)"><div class="modal-content"><div class="modal-header"><h3 class="modal-title" id="modal-title">Kategori</h3><button class="modal-close" type="button" onclick="tutupModalPaksa()">✕</button></div><div class="subcat-grid" id="modal-list"></div></div></div>
   <div id="camera-ui">
-    <video id="kamera-video" autoplay playsinline muted></video>
-    <canvas id="canvas-local" style="display:none"></canvas>
-    <canvas id="canvas-ai" style="display:none"></canvas>
-    <div class="kamera-overlay-dark">
-      <div class="kamera-top-bar">
-        <button class="back-btn" type="button" onclick="tutupKamera()" aria-label="Tutup kamera">✕</button>
-        <div class="kamera-title-area"><h2 id="cam-title">Membaca timbangan...</h2><small></small></div>
-        <button class="torch-btn" id="btn-torch" type="button" onclick="toggleTorch()" aria-label="Lampu kamera">🔦</button>
-      </div>
-      <div class="scanner-focus-area">
-        <div class="scanner-box" id="scanner-box">
-          <div class="bracket b-tl"></div><div class="bracket b-tr"></div><div class="bracket b-bl"></div><div class="bracket b-br"></div>
-          <div class="scan-line" id="scan-line"></div>
-        </div>
-      </div>
-      <div class="kamera-bottom-panel">
-        <div class="scan-source" id="scan-source"></div>
-        <div class="kamera-status-info" id="kamera-status"><div class="spinner" id="spinner"></div><span id="status-text">Menyiapkan kamera...</span></div>
-        <div class="ai-result-display" id="ai-result">0.000 <span>Kg</span></div>
-        <div class="scanner-actions">
-          <button class="btn-action-main" id="btn-lanjut" type="button" onclick="simpanKeDatabase()">Simpan Berat</button>
-          <button class="btn-action-manual" id="btn-manual" type="button" onclick="inputManual()">⌨️ Input Manual</button>
-        </div>
-        <div class="scanner-tip" id="scanner-tip"></div>
-      </div>
+    <video id="kamera-video" autoplay playsinline muted></video><canvas id="canvas-local" style="display:none"></canvas><canvas id="canvas-ai" style="display:none"></canvas>
+    <div class="kamera-overlay-dark"><div class="kamera-top-bar"><button class="back-btn" type="button" onclick="tutupKamera()" aria-label="Tutup kamera">✕</button><div class="kamera-title-area"><h2 id="cam-title">Membaca timbangan...</h2><small></small></div><button class="torch-btn" id="btn-torch" type="button" onclick="toggleTorch()" aria-label="Lampu kamera">🔦</button></div>
+      <div class="scanner-focus-area"><div class="scanner-box" id="scanner-box"><div class="bracket b-tl"></div><div class="bracket b-tr"></div><div class="bracket b-bl"></div><div class="bracket b-br"></div><div class="scan-line" id="scan-line"></div></div></div>
+      <div class="kamera-bottom-panel"><div class="scan-source" id="scan-source"></div><div class="kamera-status-info" id="kamera-status"><div class="spinner" id="spinner"></div><span id="status-text">Menyiapkan kamera...</span></div><div class="ai-result-display" id="ai-result">0.000 <span>Kg</span></div><div class="scanner-actions"><button class="btn-action-main" id="btn-lanjut" type="button" onclick="simpanKeDatabase()">Simpan Berat</button><button class="btn-action-manual" id="btn-manual" type="button" onclick="inputManual()">⌨️ Input Manual</button></div><div class="scanner-tip" id="scanner-tip"></div></div>
     </div>
   </div>
-
   <script src="data_pegawai.js?v=2503"></script>
   <script src="app_base_v25.js?v=2503"></script>
-  <script src="scanner_local.js?v=2504"></script>
+  <script src="scanner_local.js?v=2505"></script>
+  <script>
+    // Reveal only after all initial UI modules and the stored profile have settled.
+    document.addEventListener('DOMContentLoaded',function(){
+      try{
+        const saved=JSON.parse(localStorage.getItem('userBankSampah')||'null');
+        if(saved&&saved.nama&&saved.unit&&typeof window.tampilBeranda==='function')window.tampilBeranda(saved.nama,saved.unit);
+      }catch(_){/* New visitors remain on the profile form. */}
+      requestAnimationFrame(function(){document.documentElement.classList.remove('app-loading');});
+    },{once:true});
+  </script>
 </body>
 </html>
