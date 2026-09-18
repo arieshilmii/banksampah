@@ -8,6 +8,7 @@ on:
       - 'scanner_local.js'
       - 'index.html'
       - 'package.json'
+      - 'tests/vision-limit.test.cjs'
       - '.github/workflows/vision-check.yml'
   workflow_dispatch:
 jobs:
@@ -27,6 +28,7 @@ jobs:
           node --check netlify/functions/vision.js
           node --check scanner_vision.js
           node --check scanner_local.js
+          node --check tests/vision-limit.test.cjs
       - name: Verify disabled gate, origin and preflight without paid calls
         run: |
           node --input-type=module <<'JS'
@@ -45,3 +47,5 @@ jobs:
           assert.equal(preflight.status, 204);
           console.log('PASS: syntax, disabled gate, forbidden origin and CORS preflight');
           JS
+      - name: Verify sixth capture switches to manual
+        run: node tests/vision-limit.test.cjs
