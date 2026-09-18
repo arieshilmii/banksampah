@@ -1,0 +1,47 @@
+name: Vision safety checks
+on:
+  push:
+    branches: [design/glassmorphic-v2]
+    paths:
+      - 'netlify/functions/vision.js'
+      - 'scanner_vision.js'
+      - 'scanner_local.js'
+      - 'index.html'
+      - 'package.json'
+      - '.github/workflows/vision-check.yml'
+  workflow_dispatch:
+jobs:
+  vision-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Vision dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Check syntax
+        run: |
+          node --check netlify/functions/vision.js
+          node --check scanner_vision.js
+          node --check scanner_local.js
+      - name: Verify disabled gate, origin and preflight without paid calls
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          globalThis.Netlify = { env: { get: key => key === 'VISION_ENABLED' ? 'false' : null } };
+          globalThis.fetch = () => { throw new Error('Paid provider must not be called'); };
+          const { default: vision } = await import('./netlify/functions/vision.js');
+          const url = 'https://banksampahsukolilo.netlify.app/api/vision';
+          const permitted = 'https://arieshilmii.github.io';
+          const disabled = await vision(new Request(url, { method: 'POST', headers: { origin: permitted }, body: '{}' }));
+          assert.equal(disabled.status, 503);
+          assert.equal((await disabled.json()).error, 'vision_disabled');
+          const denied = await vision(new Request(url, { method: 'POST', headers: { origin: 'https://example.com' }, body: '{}' }));
+          assert.equal(denied.status, 403);
+          const preflight = await vision(new Request(url, { method: 'OPTIONS', headers: { origin: permitted } }));
+          assert.equal(preflight.status, 204);
+          console.log('PASS: syntax, disabled gate, forbidden origin and CORS preflight');
+          JS
