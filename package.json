@@ -1,0 +1,9 @@
+{
+  "name": "banksampah-sukolilo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bank Sampah Sukolilo preview and secured Vision function",
+  "dependencies": {
+    "@netlify/blobs": "11.1.0"
+  }
+}
