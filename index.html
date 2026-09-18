@@ -16,7 +16,7 @@
     #form-login h2{margin:0 0 7px;text-align:center;font-size:23px;color:#163c32}
     #form-login h2::after{content:'Atur profil sebelum mulai mencatat setoran sampah';display:block;margin-top:7px;font-size:12px;font-weight:500;color:#70847d}
     .form-group{position:relative;margin-bottom:15px}.form-group label{display:block;margin-bottom:7px;font-size:12px;font-weight:750;color:#163c32}.form-group input{width:100%;padding:13px 14px;border:1px solid #d7ece5;border-radius:15px;background:#f8fffc;color:#163c32;outline:none}
-    #dropdown-list{position:absolute;left:0;right:0;top:100%;z-index:99;display:none;align-items:flex-end;justify-content:center;background:rgba(20,49,40,.42)}.modal-content{width:100%;max-width:430px;max-height:85vh;padding:18px;background:#f5fcf9;border-radius:28px 28px 0 0}.modal-header{display:flex;align-items:center;justify-content:space-between}.modal-close{border:0}.subcat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;overflow:auto}.subcat-card{padding:14px;background:#fff;border:1px solid #d7ece5;border-radius:18px;text-align:center;cursor:pointer}
+    #dropdown-list{position:absolute;left:0;right:0;top:100%;z-index:99;display:none;max-height:190px;overflow:auto;background:#fff;border:1px solid #d7ece5;border-radius:15px;box-shadow:0 14px 34px rgba(26,84,66,.14)}
     .dropdown-item{padding:10px 12px;border-bottom:1px solid #edf5f1;cursor:pointer}.item-nama{font-size:13px;font-weight:800}.item-unit{margin-top:2px;font-size:11px;color:#70847d}
     .btn-submit{width:100%;padding:14px 16px;border:0;border-radius:16px;background:#16b98a;color:#fff;font-weight:850;margin-top:7px}
     #halaman-beranda{display:none;width:100%;max-width:430px;min-height:100vh;padding:18px}
@@ -56,6 +56,7 @@
   <script src="app_base_v25.js?v=2503"></script>
   <script src="scanner_local.js?v=3801"></script>
   <script>
+    // Reveal only after all initial UI modules and the stored profile have settled.
     document.addEventListener('DOMContentLoaded',function(){
       try{
         const saved=JSON.parse(localStorage.getItem('userBankSampah')||'null');
