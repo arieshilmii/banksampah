@@ -1,203 +1,32 @@
-// Mobile camera initializer. OCR and save logic live in their existing modules.
+// Camera initializer: LCD-only light metering and optional exposure compensation.
 (function(){
-  'use strict';
-  const $=id=>document.getElementById(id);
-  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-
-  function setStatus(text,spinner=false){
-    if($('status-text'))$('status-text').textContent=text;
-    if($('spinner'))$('spinner').style.display=spinner?'block':'none';
-  }
-
-  function clearPreviousCapture(){
-    window.resetUniversalCapture?.();
-    try{beratTerbaca=0;beratTeksTerbaca='';}catch(_){}
-    const preview=$('capture-preview');
-    if(preview){
-      preview.style.display='none';preview.hidden=true;
-      const ctx=preview.getContext('2d');if(ctx)ctx.clearRect(0,0,preview.width,preview.height);
-    }
-    const box=$('scanner-box');if(box)box.classList.remove('photo-captured');
-    ['ai-result','btn-lanjut','btn-manual','btn-retake-v19'].forEach(id=>{const el=$(id);if(el)el.style.display='none';});
-    $('camera-ui')?.querySelector('.scanner-actions')?.classList.remove('success-v19');
-    const tip=$('scanner-tip');if(tip)tip.textContent='Posisikan angka timbangan di dalam area, lalu tekan Ambil Gambar.';
-  }
-
-  function stopStreams(){
-    try{if(window.localScanner){window.localScanner.stop();window.localScanner=null;}}catch(_){}
-    try{if(window.streamKamera){window.streamKamera.getTracks().forEach(t=>t.stop());window.streamKamera=null;}}catch(_){}
-    const v=$('kamera-video');
-    if(v){try{v.pause();}catch(_){}try{v.srcObject=null;}catch(_){} }
-  }
-
-  function withTimeout(p,ms){return Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(new Error('camera-timeout')),ms))]);}
-
-  async function getStream(){
-    const constraints=[
-      {video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false},
-      {video:{facingMode:'environment'},audio:false},
-      {video:true,audio:false}
-    ];
-    let lastError;
-    for(const c of constraints){
-      try{return await withTimeout(navigator.mediaDevices.getUserMedia(c),9000);}catch(err){lastError=err;}
-    }
-    throw lastError||new Error('camera-unavailable');
-  }
-
-  async function readyVideo(video){
-    video.muted=true;video.playsInline=true;video.setAttribute('playsinline','');
-    await withTimeout(video.play(),5000);
-    const started=Date.now();
-    while((!video.videoWidth||!video.videoHeight)&&Date.now()-started<5000)await wait(100);
-    if(!video.videoWidth||!video.videoHeight)throw new Error('video-no-frame');
-  }
-
-  function measureScannerLight(scanner){
-    try{
-      if(!scanner||typeof scanner.drawCrop!=='function')return null;
-      const canvas=document.createElement('canvas');canvas.width=320;canvas.height=128;
-      if(!scanner.drawCrop(canvas,canvas.width,canvas.height))return null;
-      const data=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,canvas.width,canvas.height).data;
-      let bright=0,clipped=0,veryBright=0,sum=0,total=0;
-      for(let i=0;i<data.length;i+=16){
-        const r=data[i],g=data[i+1],b=data[i+2];
-        const y=.299*r+.587*g+.114*b;
-        sum+=y;total++;
-        if(y>=225)bright++;
-        if(y>=242)veryBright++;
-        if(r>=250||g>=250||b>=250)clipped++;
-      }
-      if(!total)return null;
-      return {mean:sum/total,bright:bright/total,veryBright:veryBright/total,clipped:clipped/total};
-    }catch(_){return null;}
-  }
-
-  function snapToStep(value,range){
-    let v=Math.max(range.min,Math.min(range.max,value));
-    const step=Number(range.step);
-    if(Number.isFinite(step)&&step>0)v=range.min+Math.round((v-range.min)/step)*step;
-    return Math.max(range.min,Math.min(range.max,v));
-  }
-
-  async function autoTuneBacklight(track,scanner){
-    try{
-      if(!track?.getCapabilities||!track?.applyConstraints)return false;
-      const caps=track.getCapabilities()||{};
-      const range=caps.exposureCompensation;
-      if(!range||!Number.isFinite(range.min)||!Number.isFinite(range.max)||range.max<=range.min)return false;
-
-      await wait(220);
-      let light=measureScannerLight(scanner);
-      if(!light)return false;
-
-      // Ordinary printed/dark scales are left untouched. Backlit LCDs commonly
-      // show a meaningful amount of clipped or near-white pixels inside the OCR frame.
-      if(light.veryBright<.045&&light.clipped<.065)return false;
-
-      setStatus('Menyesuaikan cahaya layar…',true);
-      const settings=track.getSettings?track.getSettings():{};
-      let current=Number(settings.exposureCompensation);
-      if(!Number.isFinite(current))current=0;
-
-      const firstDrop=light.clipped>.13||light.veryBright>.10?1.35:.85;
-      let target=snapToStep(current-firstDrop,range);
-      if(target>=current-.05&&range.min<current)target=snapToStep(Math.max(range.min,current-.5),range);
-      if(target<current-.02){
-        await track.applyConstraints({advanced:[{exposureCompensation:target}]});
-        await wait(300);
-      }
-
-      light=measureScannerLight(scanner)||light;
-      const now=track.getSettings?Number(track.getSettings().exposureCompensation):target;
-      if((light.clipped>.10||light.veryBright>.08)&&Number.isFinite(now)&&now>range.min+.05){
-        const second=snapToStep(now-.65,range);
-        if(second<now-.02){
-          await track.applyConstraints({advanced:[{exposureCompensation:second}]});
-          await wait(280);
-        }
-      }
-      return true;
-    }catch(err){
-      console.info('Automatic exposure adjustment unavailable:',err?.message||err);
-      return false;
-    }
-  }
-
-  function captureButton(retry=false){
-    const btn=$('btn-capture');if(!btn)return;
-    btn.style.display='block';btn.disabled=false;btn.style.opacity='1';btn.style.pointerEvents='auto';
-    btn.textContent=retry?'↻ Coba Kamera Lagi':'📸 Ambil Gambar';
-    btn.onclick=retry?()=>window.mulaiKamera(window.jenisSampahAktif||'Sampah'):()=>window.ambilGambarTimbangan?.();
-    if(!retry)window.warmUniversalOCR?.();
-  }
-
-  function install(){
-    window.mulaiKamera=async function(namaSampah){
-      try{window.tutupModalPaksa?.();}catch(_){}
-      window.jenisSampahAktif=namaSampah;
-      try{jenisSampahAktif=namaSampah;}catch(_){}
-      clearPreviousCapture();
-      stopStreams();
-
-      const ui=$('camera-ui');if(ui)ui.style.display='block';
-      const btn=$('btn-capture');
-      if(btn){btn.style.display='block';btn.disabled=true;btn.textContent='📷 Menyiapkan Kamera…';btn.style.opacity='.55';}
-      setStatus('Menyiapkan kamera…',true);
-
-      if(!navigator.mediaDevices?.getUserMedia){
-        setStatus('Browser tidak mendukung kamera. Gunakan input manual.',false);
-        if($('btn-manual'))$('btn-manual').style.display='block';captureButton(true);return;
-      }
-
-      try{
-        const stream=await getStream();
-        window.streamKamera=stream;try{streamKamera=stream;}catch(_){}
-        const video=$('kamera-video');if(!video)throw new Error('video-element-missing');
-        video.srcObject=stream;await readyVideo(video);
-
-        const track=stream.getVideoTracks()[0];
-        const caps=track&&track.getCapabilities?track.getCapabilities():{};
-        try{
-          if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous'))
-            await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
-        }catch(_){}
-        if($('btn-torch'))$('btn-torch').style.display='none';
-
-        if(typeof window.ScaleLocalScanner==='function'){
-          try{
-            const scanner=new window.ScaleLocalScanner({
-              video,
-              scannerBox:$('scanner-box'),
-              workCanvas:$('canvas-local'),
-              onStatus:()=>{},onFallback:()=>{},
-              onReading:value=>{
-                if(/^\d+\.\d{3}$/.test(String(value).replace(',','.')))window.suksesScan?.(value,'lokal');
-              }
-            });
-            window.localScanner=scanner;try{localScanner=scanner;}catch(_){}
-
-            // Backlit displays such as the user's scale can wash out the LCD.
-            // Measure only the OCR frame and lower EV on devices that expose
-            // exposureCompensation. Unsupported phones simply skip this step.
-            await autoTuneBacklight(track,scanner);
-            scanner.stop();
-          }catch(err){console.warn('Scanner initialization skipped:',err);}
-        }
-
-        captureButton();setStatus('Kamera siap. Arahkan angka lalu tekan Ambil Gambar.',false);
-      }catch(err){
-        console.error('Camera initialization failed:',err);stopStreams();
-        const msg=err?.name==='NotAllowedError'
-          ?'Izin kamera ditolak. Aktifkan izin kamera dan coba lagi.'
-          :err?.name==='NotFoundError'
-            ?'Kamera tidak ditemukan. Gunakan input manual.'
-            :'Kamera tidak dapat dibuka. Coba lagi atau input manual.';
-        setStatus(msg,false);if($('btn-manual'))$('btn-manual').style.display='block';captureButton(true);
-      }
-    };
-  }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-  window.addEventListener('load',()=>setTimeout(install,0),{once:true});
+'use strict';
+const $=id=>document.getElementById(id),wait=ms=>new Promise(r=>setTimeout(r,ms));
+let cameraSession=0;
+function status(t,spin=false){if($('status-text'))$('status-text').textContent=t;if($('spinner'))$('spinner').style.display=spin?'block':'none';}
+function clearCapture(){window.resetUniversalCapture?.();try{beratTerbaca=0;beratTeksTerbaca='';}catch(_){}const p=$('capture-preview');if(p){p.hidden=true;p.style.display='none';p.getContext('2d')?.clearRect(0,0,p.width,p.height);}['ai-result','btn-lanjut','btn-manual','btn-retake-v19'].forEach(id=>{if($(id))$(id).style.display='none';});$('camera-ui')?.querySelector('.scanner-actions')?.classList.remove('success-v19');}
+function stop(){try{window.localScanner?.stop();window.localScanner=null;localScanner=null;}catch(_){}try{window.streamKamera?.getTracks().forEach(t=>t.stop());window.streamKamera=null;streamKamera=null;}catch(_){}const v=$('kamera-video');if(v){try{v.pause();}catch(_){}v.srcObject=null;}}
+async function timeout(p,ms){return Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(new Error('camera-timeout')),ms))]);}
+async function openStream(){let error;for(const constraints of [{video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false},{video:{facingMode:'environment'},audio:false},{video:true,audio:false}]){try{return await timeout(navigator.mediaDevices.getUserMedia(constraints),9000);}catch(e){error=e;}}throw error||new Error('camera-unavailable');}
+function captureFrame(scanner){if(typeof scanner?.drawCrop!=='function')return null;const c=document.createElement('canvas');c.width=320;c.height=128;return scanner.drawCrop(c,320,128)?c:null;}
+// Locate a cyan/green backlit display INSIDE the existing scanner rectangle.
+// Exclude the dark scale body and surrounding scene from the exposure measurement.
+function lcdRegion(canvas){const w=canvas.width,h=canvas.height,data=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;const cols=new Uint16Array(w),rows=new Uint16Array(h);let found=0;
+for(let y=Math.round(h*.08);y<h*.92;y+=2)for(let x=Math.round(w*.06);x<w*.94;x+=2){const i=(y*w+x)*4,r=data[i],g=data[i+1],b=data[i+2];if(g>110&&b>95&&g>r*1.17&&b>r*1.12){cols[x]++;rows[y]++;found++;}}
+if(found<180)return null;
+const xs=[],ys=[];for(let x=0;x<w;x+=2)if(cols[x]>=Math.max(3,h*.045))xs.push(x);for(let y=0;y<h;y+=2)if(rows[y]>=Math.max(3,w*.045))ys.push(y);
+if(xs.length<22||ys.length<12)return null;const left=Math.max(0,xs[0]-5),right=Math.min(w,xs[xs.length-1]+6),top=Math.max(0,ys[0]-4),bottom=Math.min(h,ys[ys.length-1]+5);if((right-left)*(bottom-top)<w*h*.055)return null;return {left,right,top,bottom};}
+function lightOfLCD(canvas){const box=lcdRegion(canvas);if(!box)return null;const w=canvas.width,data=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,canvas.height).data;let count=0,clipped=0,near=0,min=255,max=0,sum=0;for(let y=box.top;y<box.bottom;y+=2)for(let x=box.left;x<box.right;x+=2){const i=(y*w+x)*4,r=data[i],g=data[i+1],b=data[i+2],v=.299*r+.587*g+.114*b;count++;sum+=v;min=Math.min(min,v);max=Math.max(max,v);if(g>=250||b>=250)clipped++;if(v>232)near++;}return {clipped:clipped/count,near:near/count,mean:sum/count,contrast:max-min,box};}
+function snap(value,range){let n=Math.max(range.min,Math.min(range.max,value));if(Number(range.step)>0)n=range.min+Math.round((n-range.min)/range.step)*range.step;return Math.max(range.min,Math.min(range.max,n));}
+async function tune(track,scanner,token){const range=track?.getCapabilities?.()?.exposureCompensation;if(!range||!Number.isFinite(range.min)||!Number.isFinite(range.max)||range.max<=range.min)return false;try{await wait(180);let previous=lightOfLCD(captureFrame(scanner));if(!previous||token!==cameraSession)return false;if(previous.clipped<.10&&previous.near<.32)return false;status('Menyesuaikan cahaya layar…',true);let current=Number(track.getSettings?.().exposureCompensation);if(!Number.isFinite(current))current=0;
+for(let i=0;i<3&&token===cameraSession;i++){const drop=i===0?0.9:0.55,goal=snap(current-drop,range);if(goal>=current-.02)break;await track.applyConstraints({advanced:[{exposureCompensation:goal}]});await wait(270);const next=lightOfLCD(captureFrame(scanner));if(!next)break;current=goal;if(next.clipped<.07&&next.near<.24)break;if(next.contrast<previous.contrast*.72&&next.clipped>=previous.clipped)break;previous=next;}return true;
+}catch(e){console.info('LCD exposure compensation unsupported:',e?.message||e);return false;}}
+// ROI extraction is optional and deliberately conservative: the OCR never reads outside
+// the scanner rectangle; when no LCD is detected the original crop is preserved.
+function installCrop(scanner){const original=scanner.drawCrop.bind(scanner);scanner.drawCrop=function(target,w,h){const source=document.createElement('canvas');source.width=w;source.height=h;if(!original(source,w,h))return false;const sample=document.createElement('canvas');sample.width=320;sample.height=128;sample.getContext('2d').drawImage(source,0,0,320,128);const roi=lcdRegion(sample);const ctx=target.getContext('2d');if(!ctx)return false;target.width=w;target.height=h;ctx.clearRect(0,0,w,h);if(!roi){ctx.drawImage(source,0,0);return true;}const sx=roi.left/320*w,sy=roi.top/128*h,sw=(roi.right-roi.left)/320*w,sh=(roi.bottom-roi.top)/128*h;ctx.drawImage(source,sx,sy,sw,sh,0,0,w,h);return true;};}
+function enableCapture(retry=false){const b=$('btn-capture');if(!b)return;b.style.display='block';b.disabled=false;b.style.opacity='1';b.style.pointerEvents='auto';b.textContent=retry?'↻ Coba Kamera Lagi':'📸 Ambil Gambar';b.onclick=retry?()=>window.mulaiKamera(window.jenisSampahAktif||'Sampah'):()=>window.ambilGambarTimbangan?.();if(!retry)window.warmUniversalOCR?.();}
+function install(){window.mulaiKamera=async function(name){const token=++cameraSession;window.tutupModalPaksa?.();window.jenisSampahAktif=name;try{jenisSampahAktif=name;}catch(_){}clearCapture();stop();$('camera-ui').style.display='block';const b=$('btn-capture');if(b){b.style.display='block';b.disabled=true;b.style.opacity='.55';b.textContent='📷 Menyiapkan Kamera…';}status('Menyiapkan kamera…',true);if(!navigator.mediaDevices?.getUserMedia){status('Browser tidak mendukung kamera. Gunakan input manual.');if($('btn-manual'))$('btn-manual').style.display='block';enableCapture(true);return;}
+try{const stream=await openStream();if(token!==cameraSession){stream.getTracks().forEach(t=>t.stop());return;}window.streamKamera=stream;try{streamKamera=stream;}catch(_){}const video=$('kamera-video');video.muted=true;video.playsInline=true;video.srcObject=stream;await timeout(video.play(),5000);const started=Date.now();while(!video.videoWidth&&Date.now()-started<5000)await wait(100);if(!video.videoWidth)throw new Error('video-no-frame');const track=stream.getVideoTracks()[0],caps=track.getCapabilities?.()||{};try{if(caps.focusMode?.includes?.('continuous'))await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch(_){}if($('btn-torch'))$('btn-torch').style.display='none';if(typeof window.ScaleLocalScanner==='function'){const scanner=new window.ScaleLocalScanner({video,scannerBox:$('scanner-box'),workCanvas:$('canvas-local'),onStatus:()=>{},onFallback:()=>{},onReading:()=>{}});window.localScanner=scanner;try{localScanner=scanner;}catch(_){}await tune(track,scanner,token);if(token!==cameraSession)return;scanner.stop();installCrop(scanner);}enableCapture();status('Kamera siap. Arahkan angka lalu tekan Ambil Gambar.');}
+catch(error){console.error('Camera initialization failed:',error);stop();status(error?.name==='NotAllowedError'?'Izin kamera ditolak. Aktifkan izin kamera.':'Kamera tidak dapat dibuka. Coba lagi atau input manual.');if($('btn-manual'))$('btn-manual').style.display='block';enableCapture(true);}};}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();window.addEventListener('load',()=>setTimeout(install,0),{once:true});
 })();
