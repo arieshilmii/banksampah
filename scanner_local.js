@@ -13,5 +13,9 @@ document.write('<script src="ui_camera_v20.js?v=2503"><\/script>');
 document.write('<script src="ui_status_v21.js?v=2503"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2503"><\/script>');
 document.write('<script src="ui_shell_v25.js?v=3001"><\/script>');
+// Public URL only. Secrets stay in Netlify's environment; the user supplies their access code privately.
+if (location.hostname === 'arieshilmii.github.io') {
+  window.BANK_SAMPAH_VISION_ENDPOINT = 'https://banksampahsukolilo.netlify.app/api/vision';
+}
 // Must run last: wraps the existing capture handler without adding another camera initializer.
 document.write('<script src="scanner_vision.js?v=3602"><\/script>');
