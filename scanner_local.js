@@ -1,4 +1,4 @@
-// Loader: one OCR pipeline, one camera initializer, one navigation shell.
+// Loader: one local OCR pipeline, one camera initializer, and an optional Vision route.
 document.write('<style id="clean-preload-v25">html,body{background:#ecfaf6!important;background-image:none!important}body::before,body::after{content:none!important;display:none!important;background:none!important}</style>');
 document.write('<script src="scanner_local_core.js?v=2503"><\/script>');
 document.write('<script src="scanner_book_v4.js?v=2503"><\/script>');
@@ -13,3 +13,4 @@ document.write('<script src="ui_camera_v20.js?v=2503"><\/script>');
 document.write('<script src="ui_status_v21.js?v=2503"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2503"><\/script>');
 document.write('<script src="ui_shell_v25.js?v=3001"><\/script>');
+document.write('<script src="scanner_vision.js?v=3601"><\/script>');
