@@ -1,4 +1,4 @@
-// Loader: one local OCR pipeline, one camera initializer, and one optional Vision route.
+// Loader: local OCR, camera, savings and navigation; no paid Vision requests.
 document.write('<style id="clean-preload-v25">html,body{background:#ecfaf6!important;background-image:none!important}body::before,body::after{content:none!important;display:none!important;background:none!important}</style>');
 document.write('<script src="scanner_local_core.js?v=2503"><\/script>');
 document.write('<script src="scanner_book_v4.js?v=2503"><\/script>');
@@ -13,9 +13,3 @@ document.write('<script src="ui_camera_v20.js?v=2503"><\/script>');
 document.write('<script src="ui_status_v21.js?v=2503"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2503"><\/script>');
 document.write('<script src="ui_shell_v25.js?v=3001"><\/script>');
-// Public endpoint URL only; the API key remains in Netlify environment variables.
-if (location.hostname === 'arieshilmii.github.io') {
-  window.BANK_SAMPAH_VISION_ENDPOINT = 'https://banksampahsukolilo.netlify.app/api/vision';
-}
-// Must run last: wraps the existing capture handler without adding another camera initializer.
-document.write('<script src="scanner_vision.js?v=3801"><\/script>');
