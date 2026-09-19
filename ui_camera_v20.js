@@ -44,7 +44,7 @@
           linear-gradient(#35e28b,#35e28b) right bottom/2px 28px no-repeat!important;
       }
       #camera-ui #scanner-box::after{
-        content:'Arahkan angka timbangan di dalam area'!important;
+        content:''!important;
         display:block!important;
         position:absolute!important;
         left:0!important;right:0!important;bottom:-28px!important;
