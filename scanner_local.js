@@ -1,4 +1,4 @@
-// Loader: local OCR, camera, savings and navigation; no paid Vision requests.
+// Loader: one camera pipeline with Gemini lossless capture; OpenAI Vision remains disabled.
 document.write('<style id="clean-preload-v25">html,body{background:#ecfaf6!important;background-image:none!important}body::before,body::after{content:none!important;display:none!important;background:none!important}</style>');
 document.write('<script src="scanner_local_core.js?v=2503"><\/script>');
 document.write('<script src="scanner_book_v4.js?v=2503"><\/script>');
@@ -13,3 +13,5 @@ document.write('<script src="ui_camera_v20.js?v=2503"><\/script>');
 document.write('<script src="ui_status_v21.js?v=2503"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2503"><\/script>');
 document.write('<script src="ui_shell_v25.js?v=3001"><\/script>');
+// Loaded LAST: uses original video frame for Gemini, never the locally filtered OCR crop.
+document.write('<script src="scanner_gemini_scale.js?v=3901"><\/script>');
