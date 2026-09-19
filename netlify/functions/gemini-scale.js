@@ -39,7 +39,7 @@ async function read(apiKey, model, imageData) {
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({ contents: [{ parts: [
       { text: PROMPT }, { inline_data: { mime_type: 'image/png', data: imageData } }
-    ] }], generationConfig: { temperature: 0, maxOutputTokens: 80 } })
+    ] }], generationConfig: { maxOutputTokens: 512, thinkingConfig: { thinkingLevel: 'low' } } })
   });
   if (!response.ok) { console.warn('Scale Gemini HTTP:', model, response.status); return { error: true, status: response.status }; }
   const result = await response.json();
