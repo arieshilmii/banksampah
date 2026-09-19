@@ -22,7 +22,7 @@
     #halaman-beranda{display:none;width:100%;max-width:430px;min-height:100vh;padding:18px}
     .header-beranda{display:flex;flex-direction:column;gap:14px}.profile-section h2{margin:0}.profile-section p{margin:4px 0 0}.rekap-card{display:flex}.rekap-item{flex:1}.rekap-divider{width:1px}.search-beranda{width:100%}.category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cat-card{text-align:center;cursor:pointer}
     .modal-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:flex-end;justify-content:center;background:rgba(20,49,40,.42)}.modal-content{width:100%;max-width:430px;max-height:85vh;padding:18px;background:#f5fcf9;border-radius:28px 28px 0 0}.modal-header{display:flex;align-items:center;justify-content:space-between}.modal-close{border:0}.subcat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;overflow:auto}.subcat-card{padding:14px;background:#fff;border:1px solid #d7ece5;border-radius:18px;text-align:center;cursor:pointer}
-    #camera-ui{position:fixed;inset:0;z-index:9999;display:none;overflow:hidden;background:#06100b}#kamera-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.kamera-overlay-dark{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;pointer-events:none}.kamera-top-bar{display:flex}.scanner-focus-area{flex:1;display:flex;align-items:center;justify-content:center}.scanner-box{position:relative;width:min(78vw,340px);aspect-ratio:2.5/1}.kamera-bottom-panel{pointer-events:auto}.scanner-actions{display:flex;flex-direction:column}.btn-action-main,.btn-action-manual{display:none}.ai-result-display{display:none}
+    #camera-ui{position:fixed;inset:0;z-index:9999;display:none;overflow:hidden;background:#06100b}#kamera-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.kamera-overlay-dark{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;pointer-events:none}.kamera-top-bar{display:flex}.scanner-focus-area{flex:1;display:flex;align-items:center;justify-content:center}.scanner-box{position:relative;width:min(78vw,340px);aspect-ratio:2.5/1}.kamera-bottom-panel{pointer-events:auto}.scanner-actions{display:flex;flex-direction:column;gap:12px}.btn-action-main,.btn-action-manual{display:none}.ai-result-display{display:none}#camera-ui .scan-source,#camera-ui .kamera-status-info,#camera-ui .scanner-tip{display:none!important}#camera-ui .kamera-bottom-panel{padding-top:16px!important;padding-bottom:max(16px,env(safe-area-inset-bottom))!important}#camera-ui .scanner-actions{margin:0!important}
   </style>
 </head>
 <body>
@@ -54,7 +54,7 @@
   </div>
   <script src="data_pegawai.js?v=2503"></script>
   <script src="app_base_v25.js?v=2503"></script>
-  <script src="scanner_local.js?v=3902"></script>
+  <script src="scanner_local.js?v=3903"></script>
   <script>
     // Reveal only after all initial UI modules and the stored profile have settled.
     document.addEventListener('DOMContentLoaded',function(){
