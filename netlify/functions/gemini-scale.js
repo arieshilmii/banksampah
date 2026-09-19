@@ -1,4 +1,4 @@
-// Dedicated scale reading endpoint. OpenAI Vision remains disabled.
+// Dedicated scale reading endpoint. OpenAI Vision stays disabled.
 import { getStore } from '@netlify/blobs';
 
 const ORIGINS = new Set(['https://arieshilmii.github.io', 'https://banksampahsukolilo.netlify.app']);
@@ -13,6 +13,7 @@ function reply(status, data, origin) {
     'Vary': 'Origin', ...(ORIGINS.has(origin) ? { 'Access-Control-Allow-Origin': origin } : {})
   }});
 }
+// Reserve once before any model call. One photo = exactly one model request.
 async function reserve(session) {
   const store = getStore({ name: 'banksampah-gemini-scale-sessions', consistency: 'strong' });
   const key = `weigh/${session}`;
@@ -22,7 +23,7 @@ async function reserve(session) {
     if (count >= LIMIT) return { allowed: false, remaining: 0 };
     const condition = item ? { onlyIfMatch: item.etag } : { onlyIfNew: true };
     const written = await store.setJSON(key, { count: count + 1 }, condition);
-    if (written.modified) return { allowed: true, remaining: LIMIT - count - 1 };
+    if (written.modified) return { allowed: true, remaining: LIMIT - count - 1, attempt: count + 1 };
   }
   throw new Error('quota_contention');
 }
@@ -67,13 +68,12 @@ export default async function handler(request) {
   catch (_) { return reply(503, { ok: false, error: 'quota_unavailable' }, origin); }
   if (!quota.allowed) return reply(429, { ok: false, error: 'session_limit', remaining: 0 }, origin);
   const imageData = body.image.slice('data:image/png;base64,'.length);
+  // Start with Flash for speed; subsequent unclear captures use Pro for accuracy.
+  const model = quota.attempt <= 2 ? FLASH : PRO;
   try {
-    let result = await read(key, FLASH, imageData);
+    const result = await read(key, model, imageData);
     if (result.error) return reply(result.status === 429 ? 429 : 502, { ok: false, error: 'gemini_unavailable', remaining: quota.remaining }, origin);
-    if (result.weight) return reply(200, { ok: true, weight: result.weight, model: FLASH, remaining: quota.remaining }, origin);
-    result = await read(key, PRO, imageData);
-    if (result.error) return reply(200, { ok: true, weight: null, status: 'unclear', remaining: quota.remaining }, origin);
-    return reply(200, { ok: true, weight: result.weight || null, status: result.weight ? 'read' : 'unclear', model: PRO, remaining: quota.remaining }, origin);
+    return reply(200, { ok: true, weight: result.weight || null, status: result.weight ? 'read' : 'unclear', model, remaining: quota.remaining }, origin);
   } catch (error) {
     console.warn('Scale Gemini unavailable:', error?.name || 'unknown');
     return reply(503, { ok: false, error: 'gemini_unavailable', remaining: quota.remaining }, origin);
