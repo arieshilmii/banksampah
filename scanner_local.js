@@ -14,4 +14,4 @@ document.write('<script src="ui_status_v21.js?v=2503"><\/script>');
 document.write('<script src="ui_portal_v22.js?v=2503"><\/script>');
 document.write('<script src="ui_shell_v25.js?v=3001"><\/script>');
 // Loaded LAST: uses original video frame for Gemini, never the locally filtered OCR crop.
-document.write('<script src="scanner_gemini_scale.js?v=3901"><\/script>');
+document.write('<script src="scanner_gemini_scale.js?v=3902"><\/script>');
