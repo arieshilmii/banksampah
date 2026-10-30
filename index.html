@@ -1,357 +1,161 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#213c2d">
-  <title>Bank Sampah Kecamatan Sukolilo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex; justify-content: center; align-items: center; position: relative;
-      background: #2e4a38; overflow-x: hidden;
-    }
-    body::before {
-      content: ""; position: fixed; inset: -5%; z-index: -1;
-      background-image: url('assets/bg.jpg'), url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1080');
-      background-size: cover; background-position: center; filter: blur(8px); opacity: .85;
-    }
-    button, input { font: inherit; }
-    .glass-card {
-      background: rgba(255,255,255,.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,.4); border-radius: 20px; padding: 25px;
-      width: 90%; max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,.2); margin: auto; z-index: 10;
-    }
-    .glass-card h2 { text-align: center; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,.5); margin: 0 0 20px; font-size: 20px; }
-    .form-group { position: relative; margin-bottom: 15px; }
-    label { display:block; margin-bottom:6px; color:#fff; text-shadow:1px 1px 2px rgba(0,0,0,.5); font-weight:600; font-size:13px; }
-    input { width:100%; padding:11px; border:1px solid rgba(255,255,255,.5); border-radius:10px; background:rgba(255,255,255,.8); color:#1e362a; font-size:14px; outline:none; }
-    input[readonly] { background: rgba(230,230,230,.6); color:#2c4c3b; font-weight:600; }
-    #dropdown-list { position:absolute; top:100%; left:0; right:0; background:#fff; border-radius:10px; max-height:180px; overflow-y:auto; z-index:99; display:none; box-shadow:0 8px 20px rgba(0,0,0,.25); }
-    .dropdown-item { padding:10px 12px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
-    .item-nama { font-weight:700; color:#2c4c3b; font-size:13px; }
-    .item-unit { font-size:11px; color:#6c757d; margin-top:2px; }
-    .btn-submit { width:100%; padding:13px; background:#4a7c59; color:#fff; border:0; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-top:5px; }
-
-    #halaman-beranda { display:none; width:100%; max-width:400px; padding:15px; margin:auto; z-index:10; height:100vh; overflow-y:auto; }
-    .header-beranda { background:rgba(255,255,255,.2); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.4); border-radius:15px; padding:20px 15px; color:#fff; text-shadow:1px 1px 3px rgba(0,0,0,.5); margin-bottom:15px; display:flex; flex-direction:column; gap:12px; }
-    .profile-section h2 { margin:0; font-size:22px; }
-    .profile-section p { margin:4px 0 0; font-size:12px; opacity:.9; }
-    .rekap-card { background:rgba(255,255,255,.9); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; color:#1e362a; text-shadow:none; box-shadow:0 4px 10px rgba(0,0,0,.15); }
-    .rekap-item { text-align:center; flex:1; }
-    .rekap-divider { width:1px; height:30px; background:#dcdcdc; }
-    .rekap-label { font-size:10px; color:#6c757d; font-weight:700; text-transform:uppercase; margin-bottom:4px; }
-    .rekap-value { font-size:16px; font-weight:800; color:#4a7c59; }
-    .search-beranda { width:100%; padding:12px 15px; border-radius:12px; border:0; background:rgba(255,255,255,.9); font-size:14px; box-shadow:0 4px 10px rgba(0,0,0,.1); margin-bottom:15px; }
-    .category-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; padding-bottom:30px; }
-    .cat-card { background:rgba(255,255,255,.85); border-radius:14px; padding:15px 8px; text-align:center; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.1); }
-    .cat-card:active { transform:scale(.97); }
-    .cat-icon { font-size:28px; margin-bottom:6px; }
-    .cat-title { font-size:13px; font-weight:700; color:#1e362a; }
-
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(5px); display:none; justify-content:center; align-items:flex-end; z-index:999; }
-    .modal-content { background:#f4f7f5; width:100%; max-width:400px; border-radius:20px 20px 0 0; padding:20px; max-height:85vh; display:flex; flex-direction:column; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #e0e0e0; padding-bottom:10px; }
-    .modal-title { margin:0; font-size:16px; color:#2c4c3b; }
-    .modal-close { background:#e0e0e0; border:0; border-radius:50%; width:30px; height:30px; font-weight:700; color:#555; }
-    .subcat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; overflow-y:auto; padding-bottom:20px; }
-    .subcat-card { background:#fff; border:1px solid #dce0dd; border-radius:12px; padding:15px 10px; text-align:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,.05); }
-    .subcat-card:active { transform:scale(.97); background:#e2ede5; }
-    .subcat-icon { font-size:32px; margin-bottom:8px; }
-    .subcat-name { font-size:12px; font-weight:600; color:#2c4c3b; line-height:1.3; }
-
-    #camera-ui { position:fixed; inset:0; background:#000; z-index:9999; display:none; overflow:hidden; }
-    #kamera-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
-    .kamera-overlay-dark { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; pointer-events:none; }
-    .kamera-top-bar { padding:calc(18px + env(safe-area-inset-top)) 16px 18px; display:flex; align-items:center; background:linear-gradient(to bottom,rgba(0,0,0,.82),rgba(0,0,0,0)); pointer-events:auto; }
-    .back-btn, .torch-btn { background:rgba(255,255,255,.18); backdrop-filter:blur(5px); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:50%; width:42px; height:42px; font-size:19px; display:flex; align-items:center; justify-content:center; }
-    .torch-btn { display:none; }
-    .kamera-title-area { flex:1; text-align:center; color:#fff; }
-    .kamera-title-area h2 { margin:0; font-size:17px; font-weight:650; text-shadow:0 2px 4px rgba(0,0,0,.8); }
-    .kamera-title-area small { display:block; margin-top:4px; opacity:.82; font-size:11px; }
-    .scanner-focus-area { flex:1; display:flex; justify-content:center; align-items:center; position:relative; }
-    .scanner-box { width:min(88vw,360px); aspect-ratio:2.55/1; position:relative; box-shadow:0 0 0 9999px rgba(0,0,0,.58); border-radius:14px; }
-    .scanner-box::after { content:'Posisikan hanya layar angka di dalam kotak'; position:absolute; left:0; right:0; bottom:-28px; color:rgba(255,255,255,.78); font-size:11px; text-align:center; }
-    .bracket { position:absolute; width:34px; height:34px; border-color:#00ff88; border-style:solid; filter:drop-shadow(0 0 4px rgba(0,255,136,.5)); }
-    .b-tl { top:-2px; left:-2px; border-width:4px 0 0 4px; border-top-left-radius:12px; }
-    .b-tr { top:-2px; right:-2px; border-width:4px 4px 0 0; border-top-right-radius:12px; }
-    .b-bl { bottom:-2px; left:-2px; border-width:0 0 4px 4px; border-bottom-left-radius:12px; }
-    .b-br { bottom:-2px; right:-2px; border-width:0 4px 4px 0; border-bottom-right-radius:12px; }
-    .scan-line { width:100%; height:2px; background:rgba(0,255,136,.9); position:absolute; top:0; left:0; box-shadow:0 0 10px #00ff88; animation:scanMove 1.7s infinite ease-in-out; }
-    @keyframes scanMove { 0%{top:8%;opacity:.35} 50%{top:88%;opacity:1} 100%{top:8%;opacity:.35} }
-    .kamera-bottom-panel { background:rgba(0,0,0,.88); border-radius:25px 25px 0 0; padding:20px 20px calc(22px + env(safe-area-inset-bottom)); pointer-events:auto; display:flex; flex-direction:column; align-items:center; min-height:180px; }
-    .kamera-status-info { color:#00ff88; font-size:14px; margin-bottom:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; min-height:22px; text-align:center; }
-    .spinner { width:16px; height:16px; border:2px solid #00ff88; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; flex:0 0 auto; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .scan-source { font-size:10px; color:#9ebaa7; letter-spacing:.04em; margin-bottom:8px; text-transform:uppercase; }
-    .ai-result-display { font-size:45px; font-weight:900; color:#fff; display:none; margin-bottom:12px; }
-    .ai-result-display span { font-size:20px; color:#aaa; font-weight:400; }
-    .scanner-actions { width:100%; max-width:320px; display:flex; flex-direction:column; gap:9px; }
-    .btn-action-main, .btn-action-manual, .btn-action-ai { width:100%; border-radius:28px; padding:14px 18px; cursor:pointer; font-weight:750; }
-    .btn-action-main { background:#fff; color:#111; border:0; display:none; }
-    .btn-action-manual { background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.48); display:none; }
-    .btn-action-ai { background:rgba(0,255,136,.12); color:#b9ffd7; border:1px solid rgba(0,255,136,.45); display:none; }
-    .btn-action-ai[disabled] { opacity:.55; cursor:wait; }
-    .scanner-tip { color:#9da6a0; font-size:10px; line-height:1.35; margin-top:10px; text-align:center; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087b55">
+<title>Bank Sampah Sukolilo</title>
+<style>
+:root{--green:#087b55;--green2:#0ca66b;--mint:#e9f8f0;--ink:#102b48;--muted:#6c8095;--line:#e6edf2;--blue:#eaf3ff;--gold:#fff5dc;--purple:#f2edff;--shadow:0 8px 26px rgba(16,43,72,.08)}
+*{box-sizing:border-box}body{margin:0;background:#f3f7f9;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:480px;min-height:100dvh;margin:auto;background:#f8fbfc;position:relative;padding-bottom:86px;box-shadow:0 0 40px rgba(12,45,65,.08)}.top{background:linear-gradient(135deg,#075b4b,#0b9870);color:#fff;padding:calc(16px + env(safe-area-inset-top)) 18px 20px;border-radius:0 0 24px 24px}.topline{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.1px}.brandmark{width:40px;height:40px;border-radius:14px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:23px}.brand small{display:block;font-weight:500;font-size:11px;opacity:.82;letter-spacing:.4px}.avatar{width:36px;height:36px;border-radius:50%;background:#dff5e9;color:#075b4b;display:grid;place-items:center;font-weight:800}.top h1{font-size:21px;line-height:1.2;margin:18px 0 5px}.top p{margin:0;font-size:12px;opacity:.84}.content{padding:16px 16px 24px}.demo{background:#fff7df;border:1px solid #f5e5b8;color:#775b16;padding:9px 12px;border-radius:12px;font-size:11px;line-height:1.45;margin-bottom:13px}.section-head{display:flex;justify-content:space-between;align-items:center;margin:17px 0 10px}.section-head h2{font-size:15px;margin:0}.muted{color:var(--muted)}.small{font-size:11px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;box-shadow:var(--shadow);min-height:90px}.stat .ico{width:31px;height:31px;border-radius:11px;display:grid;place-items:center;font-size:17px;margin-bottom:8px}.stat strong{display:block;font-size:18px;letter-spacing:-.4px}.stat span{font-size:10px;color:var(--muted)}.green{background:#e3f8ed;color:#078254}.blue{background:#e9f2ff;color:#2876d7}.gold{background:#fff3d6;color:#c38410}.purple{background:#f0eaff;color:#8059ce}.card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:14px;box-shadow:var(--shadow);margin-bottom:11px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.btn{border:0;border-radius:13px;padding:12px 14px;font-weight:750}.primary{background:linear-gradient(135deg,#0a9d69,#087b55);color:#fff}.secondary{background:#e9f7f0;color:#087b55}.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff0ef;color:#c34238}.full{width:100%}.input{width:100%;border:1px solid #dce6ed;border-radius:12px;padding:12px 13px;background:#fff;color:var(--ink);outline:none}.input:focus{border-color:#20a879;box-shadow:0 0 0 3px rgba(32,168,121,.12)}label{font-size:11px;font-weight:750;display:block;margin:0 0 6px;color:#4b6076}.field{margin-bottom:12px}.pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:30px;font-size:10px;font-weight:750;background:#e9f7f0;color:#087b55}.tabs{display:flex;gap:5px;background:#edf3f6;border-radius:12px;padding:4px;margin:12px 0}.tabs button{flex:1;border:0;border-radius:9px;background:transparent;padding:9px 5px;font-size:10px;color:#60748a;font-weight:700}.tabs button.active{background:#07845d;color:#fff;box-shadow:0 3px 9px #0b805333}.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.quick button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;text-align:left;min-height:104px;box-shadow:var(--shadow)}.quick .qico{font-size:23px;margin-bottom:8px}.quick strong{display:block;font-size:12px}.quick span{font-size:10px;color:var(--muted)}.listrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #edf1f4}.listrow:last-child{border:0}.person{width:38px;height:38px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:#e6f3f4;font-size:18px}.listrow strong{font-size:12px;display:block}.listrow small{font-size:10px;color:var(--muted)}.listrow .right{margin-left:auto;text-align:right}.bottom{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,480px);padding:9px 9px calc(9px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;justify-content:space-around}.bottom button{border:0;background:transparent;color:#8798a7;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;min-width:52px}.bottom button b{font-size:19px;font-weight:500}.bottom button.active{color:#07845d;font-weight:800}.screen{display:none}.screen.active{display:block}.login{padding:18px}.hero{background:linear-gradient(160deg,#dff7ee,#eaf4ff);border-radius:22px;padding:25px 18px 20px;text-align:center;position:relative;overflow:hidden;margin-bottom:16px}.hero .recycle{font-size:54px}.hero h1{font-size:24px;margin:5px 0;color:#075b4b}.hero p{font-size:12px;color:#527268;margin:0}.loginbox{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}.loginbox h2{font-size:19px;margin:0 0 5px}.loginbox>p{font-size:11px;color:var(--muted);margin:0 0 17px}.login-note{font-size:10px;color:#74899a;text-align:center;line-height:1.5;margin-top:12px}.unit-switch{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:#eff8f4;border-radius:12px;margin:12px 0;font-size:11px}.unit-switch strong{color:#087b55}.waste-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.waste{border:1px solid var(--line);border-radius:13px;background:#fff;padding:11px 5px;text-align:center;min-height:105px;position:relative}.waste.selected{border:2px solid #0ca66b;background:#f0fbf5;padding:10px 4px}.waste .wi{font-size:26px;display:block;margin-bottom:5px}.waste strong{font-size:10px;display:block;line-height:1.2}.waste small{font-size:9px;color:var(--muted);display:block;margin-top:5px}.check{position:absolute;right:6px;top:5px;background:#0ca66b;color:#fff;border-radius:50%;width:17px;height:17px;font-size:11px;display:grid;place-items:center}.qty{display:flex;align-items:center;gap:7px;margin-top:8px}.qty input{width:82px;text-align:center;font-weight:800}.qty span{font-size:11px;color:var(--muted)}.summaryline{display:flex;justify-content:space-between;padding:7px 0;font-size:11px}.total{background:#eaf8f0;border-radius:13px;padding:12px;margin:10px 0}.total strong{font-size:17px;color:#078254}.chart{height:132px;display:flex;align-items:flex-end;gap:10px;padding:12px 4px 22px;border-bottom:1px solid var(--line)}.barwrap{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.bar{width:65%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#48c88e,#07845d);min-height:5px}.barwrap small{font-size:8px;color:var(--muted)}.chartlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:9px;color:var(--muted)}.toast{position:fixed;z-index:50;bottom:90px;left:50%;transform:translateX(-50%);width:calc(100% - 34px);max-width:440px;background:#153c35;color:#fff;border-radius:12px;padding:12px 14px;font-size:11px;box-shadow:0 10px 28px #0002;display:none}.toast.show{display:block}.hide{display:none!important}.badge{font-size:9px;padding:4px 7px;border-radius:20px;background:#eef3f6;color:#64788a}.filterline{display:flex;gap:8px}.filterline select{flex:1}.empty{padding:26px 12px;text-align:center;color:var(--muted);font-size:11px}.login-role{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.login-role button{background:#f4f8fa;border:1px solid var(--line);border-radius:11px;padding:9px;font-size:10px;color:#526a7e}.login-role button.active{background:#e8f8ef;border-color:#0ca66b;color:#087b55;font-weight:800}@media(min-width:700px){body{padding:24px 0}.app{border-radius:24px;overflow:hidden;min-height:calc(100vh - 48px)}.bottom{bottom:24px;border-radius:0 0 24px 24px}}
+</style>
 </head>
 <body>
-  <div class="glass-card" id="form-login">
-    <h2>Pengaturan Profil</h2>
-    <div class="form-group">
-      <label>Nama Pegawai (Ketik Nama / Kelurahan)</label>
-      <input type="text" id="input-nama" placeholder="Ketik pencarian..." autocomplete="off">
-      <div id="dropdown-list"></div>
-    </div>
-    <div class="form-group"><label>Unit Kerja</label><input type="text" id="input-unit" placeholder="Otomatis terisi..." readonly></div>
-    <button class="btn-submit" onclick="simpanProfil()">Simpan & Lanjutkan</button>
-  </div>
-
-  <div id="halaman-beranda">
-    <div class="header-beranda">
-      <div class="profile-section"><h2 id="teks-sapa">Halo, Pegawai</h2><p id="teks-unit">📍 Unit Kerja: -</p></div>
-      <div class="rekap-card">
-        <div class="rekap-item"><div class="rekap-label">Total Terkumpul</div><div class="rekap-value" id="teks-total">0 Kg</div></div>
-        <div class="rekap-divider"></div>
-        <div class="rekap-item"><div class="rekap-label">Terakhir Setor</div><div class="rekap-value" id="teks-terakhir" style="color:#6c757d;font-size:14px">Belum ada</div></div>
-      </div>
-    </div>
-    <input type="text" id="search-sampah" class="search-beranda" placeholder="🔍 Cari jenis sampah (misal: Koran)...">
-    <div class="category-grid" id="category-grid">
-      <div class="cat-card" onclick="bukaModal('Kertas & Karton')"><div class="cat-icon">📦</div><div class="cat-title">Kertas & Karton</div></div>
-      <div class="cat-card" onclick="bukaModal('Plastik Botol')"><div class="cat-icon">🍾</div><div class="cat-title">Plastik Botol</div></div>
-      <div class="cat-card" onclick="bukaModal('Lembaran & Kemasan')"><div class="cat-icon">🛍️</div><div class="cat-title">Lembaran & Kemasan</div></div>
-      <div class="cat-card" onclick="bukaModal('Keras, Ember & Tutup')"><div class="cat-icon">🪣</div><div class="cat-title">Keras & Ember</div></div>
-      <div class="cat-card" onclick="bukaModal('Logam & Aluminium')"><div class="cat-icon">⚙️</div><div class="cat-title">Logam & Aluminium</div></div>
-      <div class="cat-card" onclick="bukaModal('Organik & Lainnya')"><div class="cat-icon">🌱</div><div class="cat-title">Organik & Lainnya</div></div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="modal-subkategori" onclick="tutupModal(event)">
-    <div class="modal-content">
-      <div class="modal-header"><h3 class="modal-title" id="modal-title">Kategori</h3><button class="modal-close" onclick="tutupModalPaksa()">✕</button></div>
-      <div class="subcat-grid" id="modal-list"></div>
-    </div>
-  </div>
-
-  <div id="camera-ui">
-    <video id="kamera-video" autoplay playsinline muted></video>
-    <canvas id="canvas-local" style="display:none"></canvas>
-    <canvas id="canvas-ai" style="display:none"></canvas>
-    <div class="kamera-overlay-dark">
-      <div class="kamera-top-bar">
-        <button class="back-btn" onclick="tutupKamera()" aria-label="Tutup kamera">✕</button>
-        <div class="kamera-title-area">
-          <h2 id="cam-title">Membaca timbangan...</h2>
-          <small>Scanner lokal • tanpa memakai kuota AI</small>
+<div class="app">
+  <section id="login" class="screen active">
+    <div class="login">
+      <div class="hero"><div class="recycle">♻️</div><h1>Bank Sampah<br>SUKOLILO</h1><p>Sampah Bernilai, Sukolilo Lebih Bersih</p></div>
+      <div class="loginbox">
+        <h2>Masuk ke Aplikasi</h2><p>Kelola bank sampah dengan mudah, transparan, dan terintegrasi.</p>
+        <div class="demo">MODE PREVIEW — akun dan data di halaman ini hanya simulasi desain. Belum terhubung ke autentikasi atau database.</div>
+        <label>Simulasikan jenis akun</label>
+        <div class="login-role">
+          <button class="active" data-role="kecamatan">Admin Kecamatan</button>
+          <button data-role="kelurahan">Admin Kelurahan</button>
+          <button data-role="rw">Petugas RW</button>
+          <button data-role="pimpinan">Pimpinan</button>
         </div>
-        <button class="torch-btn" id="btn-torch" onclick="toggleTorch()" aria-label="Lampu kamera">🔦</button>
-      </div>
-      <div class="scanner-focus-area">
-        <div class="scanner-box" id="scanner-box">
-          <div class="bracket b-tl"></div><div class="bracket b-tr"></div>
-          <div class="bracket b-bl"></div><div class="bracket b-br"></div>
-          <div class="scan-line" id="scan-line"></div>
-        </div>
-      </div>
-      <div class="kamera-bottom-panel">
-        <div class="scan-source" id="scan-source">LOCAL OCR</div>
-        <div class="kamera-status-info" id="kamera-status"><div class="spinner" id="spinner"></div><span id="status-text">Menyiapkan kamera...</span></div>
-        <div class="ai-result-display" id="ai-result">0.000 <span>Kg</span></div>
-        <div class="scanner-actions">
-          <button class="btn-action-main" id="btn-lanjut" onclick="simpanKeDatabase()">Simpan Berat</button>
-          <button class="btn-action-manual" id="btn-manual" onclick="inputManual()">⌨️ Input Berat Manual</button>
-          <button class="btn-action-ai" id="btn-ai" onclick="mintaBantuanAI()">✨ Bantu Baca dengan AI (1×)</button>
-        </div>
-        <div class="scanner-tip" id="scanner-tip">Tips: dekatkan HP hingga angka memenuhi kotak. Hindari pantulan lampu langsung pada layar.</div>
+        <div class="field"><label>Nama pengguna</label><input class="input" id="loginName" value="Petugas Demo" placeholder="Nama pengguna"></div>
+        <div class="field"><label>Unit kerja</label><select class="input" id="loginUnit"><option value="Kecamatan Sukolilo">Kecamatan Sukolilo</option><option value="Kelurahan Keputih">Kelurahan Keputih</option><option value="RW 02 Medokan Semampir">RW 02 Medokan Semampir</option></select></div>
+        <button class="btn primary full" id="loginBtn">Masuk ke Preview →</button>
+        <div class="login-note">Satu platform untuk Bank Sampah Kantor, Kelurahan, dan RW se-Kecamatan Sukolilo.</div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script src="data_pegawai.js"></script>
-  <script src="scanner_local.js"></script>
-  <script>
-    const dbSubKategori = {
-      'Kertas & Karton': [ {name:'Koran',icon:'📰'}, {name:'Kertas HVS',icon:'📄'}, {name:'Sak Semen',icon:'🛍️'}, {name:'Kertas Buram',icon:'📜'}, {name:'Majalah',icon:'🖵'}, {name:'Duplek',icon:'📦'} ],
-      'Plastik Botol': [ {name:'PET Putih Bening',icon:'🍾'}, {name:'PET Biru Muda',icon:'🧴'}, {name:'PET Biru/Hijau',icon:'🫙'}, {name:'PET Kotor',icon:'🗑️'}, {name:'PET Minyak',icon:'🛢️'}, {name:'Botol Sirup',icon:'🍷'}, {name:'Botol Kecap',icon:'🍶'}, {name:'Beling Warna',icon:'🍼'} ],
-      'Lembaran & Kemasan': [ {name:'Plastik Bening',icon:'🛍️'}, {name:'Plastik Kresek',icon:'🗑️'}, {name:'Sablon Tipis',icon:'🏷️'}, {name:'Plastik Foil',icon:'🍬'}, {name:'Plastik Karung',icon:'🌾'} ],
-      'Keras, Ember & Tutup': [ {name:'Plastik PS',icon:'🥡'}, {name:'Tutup Galon',icon:'⏺️'}, {name:'Tutup Botol',icon:'🔘'}, {name:'Keping CD',icon:'💿'}, {name:'Bak / Ember',icon:'🪣'}, {name:'Galon / Pipa',icon:'🚰'} ],
-      'Logam & Aluminium': [ {name:'Tembaga',icon:'🟤'}, {name:'Perunggu / Wajan',icon:'🍳'}, {name:'Kuningan',icon:'🔑'}, {name:'Plat Aluminium',icon:'📐'}, {name:'Kaleng / Panci',icon:'🥫'}, {name:'Besi Tebal',icon:'⛓️'} ],
-      'Organik & Lainnya': [ {name:'Minyak Jelantah',icon:'🛢️'}, {name:'Karak / Nasi',icon:'🍚'}, {name:'Sepatu Bekas',icon:'👞'} ]
-    };
+  <section id="home" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div><div class="row"><span>🔔</span><div class="avatar" id="avatar">PD</div></div></div><h1 id="greeting">Halo, Petugas</h1><p id="roleLine">Petugas Bank Sampah • Unit kerja</p></header>
+    <main class="content">
+      <div class="demo">MODE PREVIEW — statistik dan transaksi contoh. Perubahan belum disimpan ke database.</div>
+      <div class="unit-switch"><span>Unit operasional</span><strong id="activeUnit">Bank Sampah Kantor Kecamatan ▾</strong></div>
+      <div class="section-head"><h2>Ringkasan Hari Ini</h2><span class="small muted">31 Oktober 2026</span></div>
+      <div class="stats">
+        <div class="stat"><div class="ico green">♻</div><strong>24,6 kg</strong><span>Total sampah terkumpul</span></div>
+        <div class="stat"><div class="ico gold">💰</div><strong>Rp125.000</strong><span>Nilai setoran hari ini</span></div>
+        <div class="stat"><div class="ico blue">👥</div><strong>12</strong><span>Nasabah aktif</span></div>
+        <div class="stat"><div class="ico purple">🧾</div><strong>8</strong><span>Transaksi setoran</span></div>
+      </div>
+      <div class="section-head"><h2>Akses Cepat</h2></div>
+      <div class="quick">
+        <button data-go="deposit"><div class="qico">➕</div><strong>Catat Setoran</strong><span>Input sampah nasabah</span></button>
+        <button data-go="customers"><div class="qico">👥</div><strong>Data Nasabah</strong><span>Kelola daftar nasabah</span></button>
+        <button data-go="prices"><div class="qico">🏷️</div><strong>Harga Sampah</strong><span>Harga per jenis</span></button>
+        <button data-go="savings"><div class="qico">👛</div><strong>Tabungan</strong><span>Saldo dan penarikan</span></button>
+        <button data-go="reports"><div class="qico">📊</div><strong>Laporan</strong><span>Rekap dan grafik</span></button>
+        <button data-go="settings"><div class="qico">⚙️</div><strong>Pengaturan</strong><span>Unit dan petugas</span></button>
+      </div>
+      <div class="section-head"><h2>Transaksi Terbaru</h2><button class="small ghost btn" data-go="reports">Lihat semua</button></div>
+      <div class="card" id="recentList"></div>
+    </main>
+  </section>
 
-    const inputNama = document.getElementById('input-nama');
-    const inputUnit = document.getElementById('input-unit');
-    const dropdownList = document.getElementById('dropdown-list');
-    let streamKamera = null;
-    let localScanner = null;
-    let jenisSampahAktif = '';
-    let beratTerbaca = 0;
-    let beratTeksTerbaca = '';
-    let torchAktif = false;
-    let aiSedangProses = false;
+  <section id="deposit" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div><button class="btn ghost" data-go="home">Tutup</button></div><h1>Catat Setoran</h1><p>Input beberapa jenis sampah dalam satu transaksi.</p></header>
+    <main class="content">
+      <div class="demo">Mode input manual. Berat ditimbang oleh petugas, lalu dimasukkan langsung ke formulir.</div>
+      <div class="card">
+        <div class="field"><label>Cari nasabah</label><input id="customerSearch" class="input" placeholder="Nama atau kode nasabah..."></div>
+        <div id="customerResults"></div>
+        <div id="selectedCustomer" class="unit-switch hide"><span id="customerLabel">Nasabah dipilih</span><button class="small" id="changeCustomer">Ubah</button></div>
+      </div>
+      <div class="section-head"><h2>Pilih Jenis Sampah</h2><span class="small muted">3 kartu per baris</span></div>
+      <div id="wasteGrid" class="waste-grid"></div>
+      <div class="section-head"><h2>Rincian Setoran</h2><button id="clearWaste" class="small danger btn">Hapus pilihan</button></div>
+      <div class="card" id="depositItems"><div class="empty">Pilih jenis sampah dan masukkan beratnya.</div></div>
+      <div class="total"><div class="summaryline"><span>Total berat</span><b id="totalWeight">0 kg</b></div><div class="summaryline"><span>Estimasi nilai setoran</span><strong id="totalValue">Rp0</strong></div></div>
+      <div class="field"><label>Catatan (opsional)</label><textarea id="depositNote" class="input" rows="2" placeholder="Catatan kondisi sampah atau transaksi..."></textarea></div>
+      <button class="btn primary full" id="reviewDeposit">Lanjutkan ke Konfirmasi →</button>
+    </main>
+  </section>
 
-    inputNama.addEventListener('input', function () {
-      const q = this.value.trim().toLowerCase();
-      dropdownList.innerHTML = '';
-      if (!q) { dropdownList.style.display='none'; inputUnit.value=''; return; }
-      const hasil = (typeof dataPegawai !== 'undefined') ? dataPegawai.filter(p => (p.nama||'').toLowerCase().includes(q) || (p.unit||'').toLowerCase().includes(q)) : [];
-      if (!hasil.length) { dropdownList.style.display='none'; return; }
-      dropdownList.style.display='block';
-      hasil.slice(0,15).forEach(p => {
-        const d=document.createElement('div'); d.className='dropdown-item';
-        d.innerHTML=`<div class="item-nama">${p.nama}</div><div class="item-unit">📍 ${p.unit}</div>`;
-        d.onclick=()=>{ inputNama.value=p.nama; inputUnit.value=p.unit; dropdownList.style.display='none'; };
-        dropdownList.appendChild(d);
-      });
-    });
+  <section id="confirm" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div><button class="btn ghost" data-go="deposit">Kembali</button></div><h1>Konfirmasi Setoran</h1><p>Periksa kembali rincian sebelum disimpan.</p></header>
+    <main class="content">
+      <div class="card"><span class="pill">Nasabah</span><h2 id="confirmName" style="font-size:17px;margin:10px 0 3px">-</h2><div class="small muted" id="confirmMeta">-</div><div class="summaryline"><span>Kode nasabah</span><b id="confirmCode">-</b></div></div>
+      <div class="section-head"><h2>Rincian Sampah</h2></div><div class="card" id="confirmItems"></div>
+      <div class="total"><div class="summaryline"><span>Total berat</span><b id="confirmWeight">0 kg</b></div><div class="summaryline"><span>Nilai setoran</span><strong id="confirmValue">Rp0</strong></div></div>
+      <div class="demo">Transaksi ini hanya simulasi. Tombol simpan akan menampilkan hasil preview, tidak menulis ke database.</div>
+      <button class="btn primary full" id="saveDemo">✓ Simpan Setoran (Preview)</button>
+    </main>
+  </section>
 
-    function getNamaPanggilan(fullName) { const w=(fullName||'').trim().split(/\s+/); return w.length>1?w[1]:w[0]; }
-    function muatDataRekap() {
-      const riwayat=JSON.parse(localStorage.getItem('riwayat_setor')||'[]');
-      const total=riwayat.reduce((s,i)=>s+(Number(i.berat)||0),0);
-      document.getElementById('teks-total').textContent=total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+' Kg';
-      if (riwayat.length) {
-        const t=new Date(riwayat[riwayat.length-1].waktu);
-        document.getElementById('teks-terakhir').textContent=`${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
-      }
-    }
-    function simpanProfil() {
-      if (!inputNama.value || !inputUnit.value) return alert('Silakan pilih nama dari daftar!');
-      localStorage.setItem('userBankSampah',JSON.stringify({nama:inputNama.value,unit:inputUnit.value}));
-      tampilBeranda(inputNama.value,inputUnit.value);
-    }
-    function tampilBeranda(nama,unit) {
-      document.getElementById('form-login').style.display='none';
-      document.getElementById('halaman-beranda').style.display='block';
-      const p=getNamaPanggilan(nama); document.getElementById('teks-sapa').textContent=`Halo, ${p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()}`;
-      document.getElementById('teks-unit').textContent=`📍 ${unit}`; muatDataRekap();
-    }
-    window.addEventListener('load',()=>{ const s=localStorage.getItem('userBankSampah'); if(s){const u=JSON.parse(s); tampilBeranda(u.nama,u.unit);} });
+  <section id="customers" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Data Nasabah</h1><p>Nasabah terdaftar pada unit operasional.</p></header>
+    <main class="content"><div class="demo">Data contoh untuk pratinjau tampilan.</div><input class="input" placeholder="Cari nama / kode nasabah..."><div class="section-head"><h2>Nasabah Aktif</h2><button class="btn secondary small" id="addCustomer">+ Tambah</button></div><div class="card" id="customerList"></div></main>
+  </section>
 
-    function bukaModal(kategori) {
-      document.getElementById('modal-title').textContent=kategori;
-      document.getElementById('modal-list').innerHTML=(dbSubKategori[kategori]||[]).map(i=>`<div class="subcat-card" onclick="mulaiKamera('${i.name.replace(/'/g,"\\'")}')"><div class="subcat-icon">${i.icon}</div><div class="subcat-name">${i.name}</div></div>`).join('');
-      document.getElementById('modal-subkategori').style.display='flex';
-    }
-    function tutupModal(e){ if(e.target.id==='modal-subkategori') tutupModalPaksa(); }
-    function tutupModalPaksa(){ document.getElementById('modal-subkategori').style.display='none'; }
+  <section id="prices" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Harga Sampah</h1><p>Harga berlaku pada unit operasional.</p></header>
+    <main class="content"><div class="demo">Harga di bawah hanya contoh desain. Harga sebenarnya harus ditetapkan oleh pengelola.</div><div class="card" id="priceList"></div><button class="btn primary full" id="editPrices">Kelola Harga Sampah</button></main>
+  </section>
 
-    function setStatus(text, showSpinner=true) {
-      document.getElementById('status-text').textContent=text;
-      document.getElementById('spinner').style.display=showSpinner?'block':'none';
-    }
-    function tampilkanFallback(){
-      document.getElementById('btn-manual').style.display='block';
-      document.getElementById('btn-ai').style.display='block';
-    }
-    function sembunyikanFallback(){
-      document.getElementById('btn-manual').style.display='none';
-      document.getElementById('btn-ai').style.display='none';
-    }
+  <section id="savings" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Tabungan Nasabah</h1><p>Saldo dan riwayat mutasi tabungan.</p></header>
+    <main class="content"><div class="demo">Saldo dan riwayat di bawah adalah data simulasi.</div><div class="card"><span class="small muted">Total saldo nasabah contoh</span><h1 style="font-size:28px;margin:8px 0;color:#087b55">Rp1.245.000</h1><span class="pill">Unit operasional aktif</span></div><div class="section-head"><h2>Riwayat Mutasi</h2></div><div class="card"><div class="listrow"><div class="person">♻️</div><div><strong>Setoran sampah</strong><small>31 Okt 2026 • SET-DEMO-01</small></div><div class="right"><b style="color:#078254">+Rp23.000</b></div></div><div class="listrow"><div class="person">💸</div><div><strong>Penarikan tabungan</strong><small>25 Okt 2026</small></div><div class="right"><b style="color:#c34238">−Rp50.000</b></div></div></div><button class="btn primary full" id="withdrawBtn">Catat Penarikan (Preview)</button></main>
+  </section>
 
-    async function mulaiKamera(namaSampah) {
-      tutupModalPaksa();
-      jenisSampahAktif=namaSampah; beratTerbaca=0; beratTeksTerbaca=''; torchAktif=false;
-      document.getElementById('camera-ui').style.display='block';
-      document.getElementById('cam-title').textContent=`Menimbang ${namaSampah}`;
-      document.getElementById('ai-result').style.display='none';
-      document.getElementById('btn-lanjut').style.display='none';
-      document.getElementById('scan-line').style.display='block';
-      document.getElementById('scan-source').textContent='LOCAL OCR';
-      sembunyikanFallback(); setStatus('Menyiapkan kamera…');
+  <section id="reports" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Dashboard Rekapitulasi</h1><p>Monitoring berdasarkan wilayah dan unit.</p></header>
+    <main class="content"><div class="demo">Angka dan grafik contoh untuk preview. Filter wilayah akan mengikuti hak akses akun saat integrasi.</div><div class="tabs" id="scopeTabs"><button class="active">Kecamatan</button><button>Kelurahan</button><button>RW</button><button>Kantor</button></div><div class="filterline"><select class="input"><option>Oktober 2026</option><option>September 2026</option></select><select class="input"><option>Semua Unit</option><option>Bank Sampah Kantor</option></select></div><div class="stats" style="margin-top:12px"><div class="stat"><div class="ico green">♻</div><strong>1.245 kg</strong><span>Total sampah</span></div><div class="stat"><div class="ico gold">💰</div><strong>Rp3.125.000</strong><span>Nilai ekonomi</span></div><div class="stat"><div class="ico blue">👥</div><strong>342</strong><span>Jumlah nasabah</span></div><div class="stat"><div class="ico purple">🧩</div><strong>12 jenis</strong><span>Jenis sampah aktif</span></div></div><div class="section-head"><h2>Grafik Setoran Harian (kg)</h2><span class="badge">7 hari</span></div><div class="card"><div class="chart"><div class="barwrap"><div class="bar" style="height:38%"></div><small>25 Okt</small></div><div class="barwrap"><div class="bar" style="height:55%"></div><small>26 Okt</small></div><div class="barwrap"><div class="bar" style="height:68%"></div><small>27 Okt</small></div><div class="barwrap"><div class="bar" style="height:76%"></div><small>28 Okt</small></div><div class="barwrap"><div class="bar" style="height:90%"></div><small>29 Okt</small></div><div class="barwrap"><div class="bar" style="height:48%"></div><small>30 Okt</small></div><div class="barwrap"><div class="bar" style="height:65%"></div><small>31 Okt</small></div></div></div><div class="section-head"><h2>Komposisi Jenis Sampah</h2></div><div class="card"><div class="summaryline"><span>🟦 Plastik</span><b>35%</b></div><div class="summaryline"><span>🟩 Kertas & Kardus</span><b>25%</b></div><div class="summaryline"><span>🟨 Logam</span><b>15%</b></div><div class="summaryline"><span>🟢 Kaca</span><b>10%</b></div><div class="summaryline"><span>⬜ Organik & lainnya</span><b>15%</b></div></div></main>
+  </section>
 
-      try {
-        streamKamera=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:false});
-        const video=document.getElementById('kamera-video'); video.srcObject=streamKamera; await video.play();
-        const track=streamKamera.getVideoTracks()[0];
-        const caps=track.getCapabilities?track.getCapabilities():{};
-        try {
-          if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
-        } catch (_) {}
-        document.getElementById('btn-torch').style.display=caps.torch?'flex':'none';
+  <section id="settings" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Pengaturan Unit</h1><p>Profil petugas dan unit bank sampah.</p></header>
+    <main class="content"><div class="card"><div class="summaryline"><span>Pengguna</span><b id="settingUser">Petugas Demo</b></div><div class="summaryline"><span>Peran</span><b id="settingRole">Admin Kecamatan</b></div><div class="summaryline"><span>Wilayah pantauan</span><b id="settingScope">Kecamatan Sukolilo</b></div><div class="summaryline"><span>Unit transaksi</span><b id="settingUnit">Bank Sampah Kantor Kecamatan</b></div></div><div class="demo">Pada versi terhubung, daftar pegawai akan diambil dari master SDM SIMPeL. Admin dapat menetapkan penugasan petugas ke unit bank sampah.</div><button class="btn ghost full" id="logoutBtn">Keluar dari Preview</button></main>
+  </section>
 
-        localScanner=new ScaleLocalScanner({
-          video,
-          scannerBox:document.getElementById('scanner-box'),
-          workCanvas:document.getElementById('canvas-local'),
-          onStatus:(text)=>setStatus(text,true),
-          onFallback:()=>tampilkanFallback(),
-          onReading:(text)=>suksesScan(text,'lokal')
-        });
-        localScanner.start();
-      } catch (err) {
-        console.error(err); setStatus('Kamera tidak dapat diakses. Silakan input berat manual.',false); tampilkanFallback();
-        document.getElementById('btn-ai').style.display='none';
-      }
-    }
-
-    async function toggleTorch(){
-      if(!streamKamera) return;
-      const track=streamKamera.getVideoTracks()[0]; const caps=track.getCapabilities?track.getCapabilities():{};
-      if(!caps.torch) return;
-      torchAktif=!torchAktif;
-      try { await track.applyConstraints({advanced:[{torch:torchAktif}]}); document.getElementById('btn-torch').style.background=torchAktif?'rgba(255,220,80,.35)':'rgba(255,255,255,.18)'; } catch(_) { torchAktif=false; }
-    }
-
-    function suksesScan(nilaiTeks,sumber='lokal') {
-      if(localScanner) localScanner.stop();
-      const normalized=String(nilaiTeks).trim().replace(',','.');
-      const numeric=Number(normalized);
-      if(!Number.isFinite(numeric)||numeric<=0) return;
-      beratTeksTerbaca=normalized; beratTerbaca=numeric;
-      document.getElementById('scan-line').style.display='none';
-      document.getElementById('scan-source').textContent=sumber==='lokal'?'LOCAL OCR • TERVERIFIKASI':sumber==='manual'?'INPUT MANUAL':'GEMINI FALLBACK';
-      setStatus(sumber==='lokal'?'Berhasil dibaca lokal ✓':sumber==='manual'?'Berat berhasil diinput manual.':'Berhasil dibaca dengan bantuan AI.',false);
-      const result=document.getElementById('ai-result'); result.innerHTML=`${beratTeksTerbaca} <span>Kg</span>`; result.style.display='block';
-      sembunyikanFallback(); document.getElementById('btn-lanjut').style.display='block';
-    }
-
-    async function mintaBantuanAI(){
-      if(aiSedangProses) return;
-      if(!localScanner) return setStatus('Scanner belum siap. Gunakan input manual.',false);
-      const base64=localScanner.captureBase64(720,.9);
-      if(!base64) return setStatus('Belum bisa mengambil gambar layar. Coba lagi.',false);
-      aiSedangProses=true; const btn=document.getElementById('btn-ai'); btn.disabled=true; btn.textContent='✨ AI sedang membaca…';
-      document.getElementById('scan-source').textContent='GEMINI FALLBACK • 1 REQUEST'; setStatus('Mengirim crop layar timbangan ke AI…',true);
-      try {
-        const response=await fetch('/.netlify/functions/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:base64})});
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok || data.error){
-          const status=data.status||response.status;
-          if(status===429) setStatus('Kuota AI sedang penuh. Scanner lokal tetap aktif atau gunakan input manual.',false);
-          else setStatus('AI belum berhasil membaca. Scanner lokal tetap aktif atau gunakan input manual.',false);
-          if(localScanner) localScanner.start();
-          return;
-        }
-        const text=data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
-        const match=text.match(/\d+(?:[.,]\d+)?/);
-        if(match && Number(match[0].replace(',','.'))>0) suksesScan(match[0].replace(',','.'),'AI');
-        else { setStatus('AI tidak yakin pada angkanya. Gunakan scanner lokal atau input manual.',false); if(localScanner)localScanner.start(); }
-      } catch(err){ console.error(err); setStatus('Koneksi AI bermasalah. Scanner lokal tetap bisa digunakan.',false); if(localScanner)localScanner.start(); }
-      finally { aiSedangProses=false; btn.disabled=false; btn.textContent='✨ Bantu Baca dengan AI (1×)'; tampilkanFallback(); }
-    }
-
-    function inputManual(){
-      const manual=prompt(`Masukkan berat ${jenisSampahAktif} dalam Kg. Contoh: 0,260 atau 2,5.`,'0,000');
-      if(manual===null) return;
-      const raw=String(manual).trim().replace(',','.');
-      if(!/^\d+(?:\.\d{1,3})?$/.test(raw) || Number(raw)<=0) return alert('Berat tidak valid. Masukkan angka > 0 dengan maksimal 3 angka desimal.');
-      suksesScan(raw,'manual');
-    }
-
-    function tutupKamera(){
-      if(localScanner){localScanner.stop(); localScanner=null;}
-      if(streamKamera){streamKamera.getTracks().forEach(t=>t.stop()); streamKamera=null;}
-      document.getElementById('camera-ui').style.display='none';
-      document.getElementById('btn-torch').style.display='none';
-    }
-    function simpanKeDatabase(){
-      const riwayat=JSON.parse(localStorage.getItem('riwayat_setor')||'[]');
-      riwayat.push({jenis:jenisSampahAktif,berat:beratTerbaca,berat_tampilan:beratTeksTerbaca,waktu:new Date().toISOString()});
-      localStorage.setItem('riwayat_setor',JSON.stringify(riwayat)); tutupKamera(); muatDataRekap();
-    }
-  </script>
+  <nav id="bottom" class="bottom hide"><button class="active" data-go="home"><b>⌂</b>Beranda</button><button data-go="deposit"><b>⊕</b>Setoran</button><button data-go="customers"><b>♙</b>Nasabah</button><button data-go="reports"><b>▥</b>Laporan</button><button data-go="settings"><b>☰</b>Lainnya</button></nav>
+  <div id="toast" class="toast"></div>
+</div>
+<script>
+const customers=[
+ {id:"NSB-00027",name:"Siti Rahayu",unit:"RW 02, Medokan Semampir",balance:245000,emoji:"👩🏻"},
+ {id:"NSB-00031",name:"Budi Santoso",unit:"RW 01, Keputih",balance:180000,emoji:"👨🏻"},
+ {id:"NSB-00042",name:"Dewi Lestari",unit:"RW 05, Nginden Jangkungan",balance:96000,emoji:"👩🏼"},
+ {id:"NSB-00053",name:"Rudi Hartono",unit:"Kantor Kecamatan Sukolilo",balance:125000,emoji:"👨🏽"}
+];
+const wastes=[
+ {id:"pet",name:"Plastik PET",emoji:"🧴",price:5000},{id:"hdpe",name:"Plastik HDPE",emoji:"🧃",price:4000},{id:"campur",name:"Plastik Campuran",emoji:"🛍️",price:2500},
+ {id:"kertas",name:"Kertas",emoji:"📦",price:3000},{id:"kardus",name:"Kardus",emoji:"🗃️",price:2500},{id:"logam",name:"Logam",emoji:"🥫",price:15000},
+ {id:"kaca",name:"Kaca",emoji:"🍾",price:1000},{id:"organik",name:"Organik",emoji:"🌱",price:500},{id:"lainnya",name:"Lainnya",emoji:"♻️",price:0}
+];
+let role="kecamatan",unit="Kecamatan Sukolilo",chosenCustomer=null,selected={},draft=[];
+const fmt=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
+const toast=msg=>{const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2600)};
+const roleNames={kecamatan:"Admin Kecamatan",kelurahan:"Admin Kelurahan",rw:"Petugas RW",pimpinan:"Pimpinan"};
+function go(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.getElementById("bottom").classList.toggle("hide",id==="login"||id==="confirm");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="deposit")renderWaste();if(id==="customers")renderCustomers();if(id==="prices")renderPrices();}
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+document.querySelectorAll(".login-role button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".login-role button").forEach(x=>x.classList.remove("active"));b.classList.add("active");role=b.dataset.role;const sel=document.getElementById("loginUnit");sel.innerHTML=role==="rw"?'<option>RW 02 Medokan Semampir</option>':role==="kelurahan"?'<option>Kelurahan Keputih</option>':role==="pimpinan"?'<option>Kecamatan Sukolilo</option>':'<option>Kecamatan Sukolilo</option>'; }));
+document.getElementById("loginBtn").onclick=()=>{unit=document.getElementById("loginUnit").value;const name=document.getElementById("loginName").value||"Petugas Demo";document.getElementById("greeting").textContent="Halo, "+name.split(" ")[0];document.getElementById("roleLine").textContent=roleNames[role]+" • "+unit;document.getElementById("avatar").textContent=name.slice(0,1).toUpperCase();document.getElementById("activeUnit").textContent=role==="rw"?"Bank Sampah "+unit:"Bank Sampah Kantor "+(role==="kelurahan"?unit:"Kecamatan Sukolilo");document.getElementById("settingUser").textContent=name;document.getElementById("settingRole").textContent=roleNames[role];document.getElementById("settingScope").textContent=role==="rw"?unit:role==="kelurahan"?"Seluruh RW di "+unit:"Seluruh Kecamatan Sukolilo";document.getElementById("settingUnit").textContent=document.getElementById("activeUnit").textContent;go("home");};
+function renderRecent(){document.getElementById("recentList").innerHTML=customers.slice(0,3).map((c,i)=>'<div class="listrow"><div class="person">'+c.emoji+'</div><div><strong>'+c.name+'</strong><small>'+c.unit+'</small></div><div class="right"><b>'+["2,5 kg","3,0 kg","1,2 kg"][i]+'</b><small>'+fmt([12500,15000,4000][i])+'</small></div></div>').join("");}
+function renderCustomers(){document.getElementById("customerList").innerHTML=customers.map(c=>'<div class="listrow"><div class="person">'+c.emoji+'</div><div><strong>'+c.name+'</strong><small>'+c.id+' • '+c.unit+'</small></div><div class="right"><b>'+fmt(c.balance)+'</b><small>Saldo</small></div></div>').join("");}
+function renderPrices(){document.getElementById("priceList").innerHTML=wastes.map(w=>'<div class="listrow"><div class="person">'+w.emoji+'</div><div><strong>'+w.name+'</strong><small>Harga contoh per kg</small></div><div class="right"><b>'+ (w.price?fmt(w.price):"Belum diatur")+'</b></div></div>').join("");}
+function renderWaste(){document.getElementById("wasteGrid").innerHTML=wastes.map(w=>'<button class="waste '+(selected[w.id]?'selected':'')+'" data-waste="'+w.id+'">'+(selected[w.id]?'<span class="check">✓</span>':'')+'<span class="wi">'+w.emoji+'</span><strong>'+w.name+'</strong><small>'+(w.price?fmt(w.price)+"/kg":"Harga belum diatur")+'</small></button>').join("");document.querySelectorAll("[data-waste]").forEach(b=>b.onclick=()=>{const id=b.dataset.waste;if(selected[id])delete selected[id];else selected[id]=0;renderWaste();renderItems();});}
+function renderCustomerResults(q){const el=document.getElementById("customerResults");if(!q){el.innerHTML="";return;}const found=customers.filter(c=>(c.name+c.id+c.unit).toLowerCase().includes(q.toLowerCase()));el.innerHTML=found.map(c=>'<button class="listrow" style="width:100%;background:white;border:0;text-align:left" data-customer="'+c.id+'"><div class="person">'+c.emoji+'</div><div><strong>'+c.name+'</strong><small>'+c.id+' • '+c.unit+'</small></div></button>').join("")||'<div class="empty">Nasabah tidak ditemukan pada data contoh.</div>';document.querySelectorAll("[data-customer]").forEach(b=>b.onclick=()=>selectCustomer(b.dataset.customer));}
+function selectCustomer(id){chosenCustomer=customers.find(c=>c.id===id);document.getElementById("customerLabel").textContent=chosenCustomer.name+" • "+chosenCustomer.id;document.getElementById("selectedCustomer").classList.remove("hide");document.getElementById("customerSearch").classList.add("hide");document.getElementById("customerResults").innerHTML="";}
+document.getElementById("customerSearch").oninput=e=>renderCustomerResults(e.target.value);
+document.getElementById("changeCustomer").onclick=()=>{chosenCustomer=null;document.getElementById("selectedCustomer").classList.add("hide");document.getElementById("customerSearch").classList.remove("hide");document.getElementById("customerSearch").value="";};
+function renderItems(){const list=Object.keys(selected);const el=document.getElementById("depositItems");if(!list.length){el.innerHTML='<div class="empty">Pilih jenis sampah dan masukkan beratnya.</div>';updateTotal();return;}el.innerHTML=list.map(id=>{const w=wastes.find(x=>x.id===id);return '<div class="listrow"><div class="person">'+w.emoji+'</div><div style="flex:1"><strong>'+w.name+'</strong><small>'+fmt(w.price)+'/kg</small><div class="qty"><input class="input" type="number" min="0" step="0.001" inputmode="decimal" placeholder="0,000" value="'+(selected[id]||"")+'" data-qty="'+id+'"><span>kg</span></div></div><div class="right"><b>'+fmt((Number(selected[id])||0)*w.price)+'</b><button class="small danger btn" data-remove="'+id+'">Hapus</button></div></div>';}).join("");document.querySelectorAll("[data-qty]").forEach(i=>i.oninput=()=>{selected[i.dataset.qty]=Math.max(0,Number(i.value)||0);updateTotal();const w=wastes.find(x=>x.id===i.dataset.qty);i.closest(".listrow").querySelector(".right b").textContent=fmt(selected[i.dataset.qty]*w.price);});document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{delete selected[b.dataset.remove];renderWaste();renderItems();});updateTotal();}
+function updateTotal(){let weight=0,value=0;Object.entries(selected).forEach(([id,qty])=>{const w=wastes.find(x=>x.id===id);weight+=Number(qty)||0;value+=(Number(qty)||0)*w.price;});document.getElementById("totalWeight").textContent=weight.toLocaleString("id-ID",{maximumFractionDigits:3})+" kg";document.getElementById("totalValue").textContent=fmt(value);}
+document.getElementById("clearWaste").onclick=()=>{selected={};renderWaste();renderItems();};
+document.getElementById("reviewDeposit").onclick=()=>{if(!chosenCustomer)return toast("Pilih nasabah terlebih dahulu.");const items=Object.entries(selected).filter(([,q])=>Number(q)>0);if(!items.length)return toast("Masukkan berat minimal satu jenis sampah.");draft=items.map(([id,q])=>{const w=wastes.find(x=>x.id===id);return {...w,weight:Number(q),total:Number(q)*w.price};});const total=draft.reduce((s,x)=>s+x.total,0),weight=draft.reduce((s,x)=>s+x.weight,0);document.getElementById("confirmName").textContent=chosenCustomer.name;document.getElementById("confirmMeta").textContent=chosenCustomer.unit;document.getElementById("confirmCode").textContent=chosenCustomer.id;document.getElementById("confirmItems").innerHTML=draft.map(x=>'<div class="summaryline"><span>'+x.emoji+' '+x.name+' · '+x.weight+' kg</span><b>'+fmt(x.total)+'</b></div>').join("");document.getElementById("confirmWeight").textContent=weight.toLocaleString("id-ID")+" kg";document.getElementById("confirmValue").textContent=fmt(total);go("confirm");};
+document.getElementById("saveDemo").onclick=()=>{toast("Simulasi berhasil. Belum ada data yang disimpan ke database.");selected={};draft=[];chosenCustomer=null;document.getElementById("selectedCustomer").classList.add("hide");document.getElementById("customerSearch").classList.remove("hide");document.getElementById("customerSearch").value="";renderWaste();renderItems();go("home");};
+document.getElementById("addCustomer").onclick=()=>toast("Form pendaftaran nasabah akan diaktifkan setelah database terhubung.");
+document.getElementById("editPrices").onclick=()=>toast("Pengelolaan harga akan diaktifkan setelah hak akses dan database siap.");
+document.getElementById("withdrawBtn").onclick=()=>toast("Penarikan tabungan akan diaktifkan pada tahap integrasi database.");
+document.getElementById("logoutBtn").onclick=()=>go("login");
+document.getElementById("scopeTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#scopeTabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");toast("Filter "+b.textContent+" — data contoh preview.");});
+renderRecent();renderCustomers();renderPrices();renderWaste();renderItems();
+</script>
 </body>
 </html>
