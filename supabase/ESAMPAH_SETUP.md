@@ -60,7 +60,7 @@ Unit kecamatan dan 7 unit kelurahan dibuat dari master kelurahan. Unit RW diinis
 
 Satu kali simpan setoran membuat satu batch, satu baris transaksi per subjenis, dan satu baris mutasi per transaksi. Saldo nasabah bertambah langsung dalam transaksi database yang sama. Jika salah satu langkah gagal, seluruh batch dibatalkan. Kunci permintaan mencegah submit ulang yang sama menambah saldo dua kali.
 
-Harga jenis sampah saat ini masih Rp0. Admin harus menetapkan harga sebelum transaksi dapat disimpan; aplikasi menolak harga nol dan tidak memakai harga contoh pada tampilan.
+Semua harga jenis sampah saat ini masih Rp0. Setelah login sebagai Admin Kecamatan, buka menu Harga Sampah lalu gunakan tombol Ubah pada tiap jenis untuk menetapkan harga per kg. Aplikasi menolak transaksi dengan harga nol dan tidak memakai harga contoh pada tampilan.
 
 ## 5. Catatan keamanan
 
