@@ -85,7 +85,21 @@
 
   <section id="customers" class="screen">
     <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Data Nasabah</h1><p>Nasabah terdaftar pada unit operasional.</p></header>
-    <main class="content"><input class="input" placeholder="Cari nama / kode nasabah..."><div class="section-head"><h2>Nasabah Aktif</h2><button class="btn secondary small" id="addCustomer">+ Tambah</button></div><div class="card" id="customerList"></div></main>
+    <main class="content">
+      <div class="field"><label>Cari nasabah</label><input class="input" id="customerFilter" placeholder="Cari nama, NIK, atau kode nasabah..."></div>
+      <div class="section-head"><h2>Nasabah Aktif</h2><button class="btn secondary small" id="addCustomer">+ Tambah Nasabah</button></div>
+      <div class="card hide" id="customerFormCard">
+        <h2 style="font-size:15px;margin:0 0 14px">Tambah Nasabah</h2>
+        <div class="field"><label for="newCustomerName">Nama</label><input class="input" id="newCustomerName" autocomplete="name" placeholder="Nama lengkap"></div>
+        <div class="field"><label for="newCustomerNik">NIK</label><input class="input" id="newCustomerNik" inputmode="numeric" maxlength="16" placeholder="16 digit NIK"></div>
+        <div id="nikLookupHint" class="small muted" style="margin:-4px 0 12px"></div>
+        <div class="field"><label for="newCustomerAddress">Alamat</label><textarea class="input" id="newCustomerAddress" rows="3" placeholder="Alamat lengkap"></textarea></div>
+        <button class="btn primary full" id="saveCustomer">Simpan Nasabah</button>
+        <button class="btn ghost full" id="cancelCustomer" style="margin-top:8px">Batal</button>
+        <div id="customerFormFeedback" class="small muted" style="margin-top:9px"></div>
+      </div>
+      <div class="card" id="customerList"></div>
+    </main>
   </section>
 
   <section id="prices" class="screen">
@@ -267,15 +281,60 @@ async function loadHome(){
 }
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 async function loadCustomers(){
- const {data,error}=await supabase.from("esampah_nasabah").select("id,kode_nasabah,nama,telepon,alamat,rw,saldo,status,kategori_nasabah,kelurahan(nama)").order("nama").limit(500);
+ const {data,error}=await supabase.from("esampah_nasabah").select("id,kode_nasabah,nama,nik,alamat,rw,saldo,status,kategori_nasabah,kelurahan(nama)").eq("status","aktif").order("nama").limit(1000);
  if(error){toast(error.message);return;}
  customers=data||[];
  renderCustomers();
 }
 function renderCustomers(){
  const target=$("customerList");
- target.innerHTML=customers.length?customers.map(c=>'<div class="listrow"><div class="person">👤</div><div><strong>'+escapeHtml(c.nama)+'</strong><small>'+escapeHtml(c.kode_nasabah)+' • '+escapeHtml(c.kelurahan?.nama||"")+(c.rw?" / RW "+escapeHtml(c.rw):"")+' • '+escapeHtml(c.kategori_nasabah||"warga")+'</small></div><div class="right"><b>'+fmt(c.saldo)+'</b><small>Saldo</small></div></div>').join(""):'<div class="empty">Belum ada nasabah pada unit ini.</div>';
+ const q=($("customerFilter")?.value||"").trim().toLowerCase();
+ const rows=customers.filter(c=>[c.nama,c.nik,c.kode_nasabah].some(v=>String(v||"").toLowerCase().includes(q)));
+ target.innerHTML=rows.length?rows.map(c=>'<div class="listrow" style="align-items:flex-start"><div class="person">👤</div><div style="flex:1;min-width:0"><strong>'+escapeHtml(c.nama)+'</strong><small>'+escapeHtml(c.kode_nasabah)+' • NIK '+escapeHtml(c.nik||"-")+'</small><small style="display:block">'+escapeHtml(c.alamat||"Alamat belum diisi")+'</small><small>'+escapeHtml(c.kelurahan?.nama||"")+(c.rw?" / RW "+escapeHtml(c.rw):"")+'</small><div id="deleteBox_'+c.id+'" class="hide" style="margin-top:10px;padding:10px;background:#fff5f4;border-radius:12px"><div class="small" style="color:#a63831;margin-bottom:7px">Untuk menonaktifkan nasabah ini, ketik <b>HAPUS</b>. Riwayat transaksi tetap disimpan.</div><input class="input" id="deleteText_'+c.id+'" placeholder="Ketik HAPUS" autocomplete="off"><button class="btn danger full" style="margin-top:7px" data-confirm-delete="'+c.id+'">Konfirmasi Hapus</button></div></div><div class="right"><b>'+fmt(c.saldo)+'</b><small>Saldo</small><button class="btn danger small" style="margin-top:8px" data-toggle-delete="'+c.id+'">Hapus</button></div></div>').join(""):'<div class="empty">Tidak ada nasabah yang cocok dengan pencarian.</div>';
+ document.querySelectorAll("[data-toggle-delete]").forEach(b=>b.onclick=()=>{$("deleteBox_"+b.dataset.toggleDelete).classList.toggle("hide");});
+ document.querySelectorAll("[data-confirm-delete]").forEach(b=>b.onclick=async()=>{
+  const id=b.dataset.confirmDelete,typed=$("deleteText_"+id).value.trim();
+  if(typed!=="HAPUS"){toast("Ketik HAPUS dengan benar untuk melanjutkan.");return;}
+  b.disabled=true;b.textContent="Memproses…";
+  try{
+   const {data,error}=await supabase.rpc("esampah_hapus_nasabah",{p_nasabah_id:id,p_konfirmasi:typed});
+   if(error)throw error;
+   toast("Nasabah dinonaktifkan. Riwayat transaksi tetap aman.");
+   await loadCustomers();
+  }catch(err){toast(err.message||"Gagal menghapus nasabah.");b.disabled=false;b.textContent="Konfirmasi Hapus";}
+ });
 }
+$("customerFilter").addEventListener("input",renderCustomers);
+$("addCustomer").onclick=()=>{$("customerFormCard").classList.toggle("hide");$("customerFormFeedback").textContent="";};
+$("cancelCustomer").onclick=()=>{$("customerFormCard").classList.add("hide");};
+$("newCustomerNik").addEventListener("input",()=>{
+ const nik=$("newCustomerNik").value.replace(/\\D/g,"").slice(0,16);
+ $("newCustomerNik").value=nik;
+ const found=customers.find(x=>x.nik===nik);
+ if(found){
+  $("newCustomerName").value=found.nama||"";
+  $("newCustomerAddress").value=found.alamat||"";
+  $("nikLookupHint").textContent="NIK sudah terdaftar atas nama "+found.nama+". Data ditemukan, tidak perlu membuat nasabah baru.";
+ }else{
+  $("nikLookupHint").textContent=nik.length===16?"NIK belum terdaftar. Silakan lengkapi nama dan alamat.":"Masukkan 16 digit NIK.";
+ }
+});
+$("saveCustomer").onclick=async()=>{
+ const nama=$("newCustomerName").value.trim(),nik=$("newCustomerNik").value.trim(),alamat=$("newCustomerAddress").value.trim();
+ const feedback=$("customerFormFeedback");
+ if(nama.length<2||!/^[0-9]{16}$/.test(nik)||!alamat){feedback.textContent="Lengkapi Nama, NIK 16 digit, dan Alamat.";return;}
+ if(customers.some(x=>x.nik===nik)){feedback.textContent="NIK ini sudah terdaftar. Gunakan data nasabah yang ditemukan, jangan buat duplikat.";return;}
+ const btn=$("saveCustomer");btn.disabled=true;btn.textContent="Menyimpan…";feedback.textContent="";
+ try{
+  const {data,error}=await supabase.rpc("esampah_tambah_nasabah_v2",{p_nama:nama,p_nik:nik,p_alamat:alamat,p_kelurahan_id:profile.kelurahan_id||null,p_rw:profile.rw||null});
+  if(error)throw error;
+  toast("Nasabah berhasil ditambahkan: "+data.kode_nasabah);
+  $("newCustomerName").value="";$("newCustomerNik").value="";$("newCustomerAddress").value="";$("nikLookupHint").textContent="";
+  $("customerFormCard").classList.add("hide");
+  await loadCustomers();
+ }catch(err){feedback.textContent=err.message||"Gagal menambahkan nasabah.";}
+ finally{btn.disabled=false;btn.textContent="Simpan Nasabah";}
+};
 async function loadDeposit(){
  if(profile.role==="pimpinan")return;
  if(!wasteTypes.length)await loadReferenceData();
