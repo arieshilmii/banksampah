@@ -121,8 +121,9 @@
           <div class="field"><label for="withdrawAmount">Nominal penarikan (Rp)</label><input class="input" id="withdrawAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Contoh: 50000"></div>
           <div class="summaryline"><span>Saldo setelah penarikan</span><b id="withdrawAfter">Rp0</b></div>
           <div class="field"><label for="withdrawNote">Keterangan (opsional)</label><textarea class="input" id="withdrawNote" rows="2" maxlength="300" placeholder="Contoh: Pengambilan tabungan oleh nasabah"></textarea></div>
-          <div class="demo">Pastikan uang tunai sudah benar-benar diserahkan kepada nasabah sebelum menekan tombol konfirmasi. Setelah disimpan, saldo langsung berkurang.</div>
-          <button class="btn primary full" id="confirmWithdraw">✓ Uang Tunai Sudah Diserahkan — Simpan</button>
+          <div class="demo">Pastikan uang tunai sudah benar-benar diserahkan kepada nasabah sebelum pencatatan. Setelah disimpan, saldo langsung berkurang.</div>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:10px 0"><input id="withdrawCashConfirmed" type="checkbox" style="margin-top:2px"> Saya konfirmasi uang tunai sudah diserahkan kepada nasabah.</label>
+          <button class="btn primary full" id="confirmWithdraw" disabled>✓ Simpan Penarikan</button>
           <div id="withdrawFeedback" class="small muted" style="margin-top:9px"></div>
         </div>
       </div>
@@ -515,6 +516,7 @@ function updateWithdrawPreview(){
  const balance=Number(withdrawCustomer?.saldo||0);
  $("withdrawAfter").textContent=fmt(Math.max(0,balance-amount));
  $("withdrawAfter").style.color=amount>balance?"#c34238":"#087b55";
+ if($("confirmWithdraw"))$("confirmWithdraw").disabled=!(amount>0&&amount<=balance&&Number.isInteger(amount)&&$("withdrawCashConfirmed").checked);
 }
 function renderWithdrawCustomerResults(){
  const q=$("withdrawCustomerSearch").value.trim().toLowerCase();
@@ -533,6 +535,7 @@ function selectWithdrawCustomer(id){
  $("withdrawBalance").textContent=fmt(withdrawCustomer.saldo);
  $("withdrawAmount").value="";
  $("withdrawNote").value="";
+ $("withdrawCashConfirmed").checked=false;
  $("withdrawFeedback").textContent="";
  updateWithdrawPreview();
 }
@@ -543,17 +546,19 @@ function clearWithdrawCustomer(){
  $("withdrawCustomerResults").innerHTML="";
  $("withdrawAmount").value="";
  $("withdrawNote").value="";
+ if($("withdrawCashConfirmed"))$("withdrawCashConfirmed").checked=false;
 }
 $("withdrawCustomerSearch").addEventListener("focus",renderWithdrawCustomerResults);
 $("withdrawCustomerSearch").addEventListener("input",renderWithdrawCustomerResults);
 $("withdrawChangeCustomer").onclick=clearWithdrawCustomer;
 $("withdrawAmount").addEventListener("input",updateWithdrawPreview);
+$("withdrawCashConfirmed").addEventListener("change",updateWithdrawPreview);
 $("confirmWithdraw").onclick=async()=>{
  if(!withdrawCustomer)return toast("Pilih nasabah terlebih dahulu.");
  const amount=Number($("withdrawAmount").value);
  if(!Number.isFinite(amount)||amount<=0||!Number.isInteger(amount))return toast("Masukkan nominal penarikan berupa angka rupiah bulat yang lebih dari nol.");
  if(amount>Number(withdrawCustomer.saldo||0))return toast("Nominal melebihi saldo nasabah.");
- if(!confirm("Pastikan uang tunai Rp"+amount.toLocaleString("id-ID")+" sudah diserahkan kepada "+withdrawCustomer.nama+". Lanjutkan pencatatan?"))return;
+ if(!$("withdrawCashConfirmed").checked)return toast("Konfirmasi penyerahan uang tunai terlebih dahulu.");
  const btn=$("confirmWithdraw");btn.disabled=true;btn.textContent="Menyimpan penarikan…";
  try{
   const {data,error}=await supabase.rpc("esampah_catat_penarikan",{
@@ -572,7 +577,7 @@ $("confirmWithdraw").onclick=async()=>{
 async function loadSavings(){
  const [{data,error},{data:customerRows,error:customerError}]=await Promise.all([
   supabase.from("esampah_mutasi").select("id,tipe,nominal,saldo_setelah,keterangan,created_at,nasabah:esampah_nasabah(nama,kode_nasabah)").order("created_at",{ascending:false}).limit(100),
-  supabase.from("esampah_nasabah").select("id,saldo").eq("status","aktif")
+  supabase.from("esampah_nasabah").select("id,kode_nasabah,nama,saldo,status,nik,alamat,rw,kategori_nasabah,kelurahan(nama)").eq("status","aktif").order("nama").limit(1000)
  ]);
  if(error||customerError){toast(error?.message||customerError?.message||"Gagal memuat tabungan.");return;}
  customers=customerRows||[];
