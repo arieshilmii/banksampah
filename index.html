@@ -391,7 +391,7 @@ function openSubtypeModal(typeId){
  const key=categoryKey(category.nama),options=subtypes[key]||subtypes.lainnya;
  $("subtypeTitle").textContent=category.nama;
  $("subtypeHint").textContent=Number(category.harga_per_kg)>0?"Pilih subjenis sampah. Harga mengikuti kategori "+category.nama+".":"Harga kategori ini belum ditetapkan.";
- $("subtypeOptions").innerHTML=options.map(([id,name,emoji])=>'<button class="subtype-option" type="button" data-subtype="'+id+'"><span class="subtype-emoji">'+emoji+'</span><span><strong>'+escapeHtml(name)+'</strong><small>'+(Number(category.harga_per_kg)>0?fmt(category.harga_per_kg)+"/kg":"Belum ada harga")+'</small></span></button>').join("");
+ $("subtypeOptions").innerHTML=options.map(([id,name,emoji])=>{const p=subtypePriceMap[typeId+":"+id];const price=Number(p?.harga_per_kg??category.harga_per_kg)||0;return '<button class="subtype-option" type="button" data-subtype="'+id+'"><span class="subtype-emoji">'+emoji+'</span><span><strong>'+escapeHtml(name)+'</strong><small>'+(price>0?fmt(price)+"/kg":"Harga belum diatur")+(p? " • Harga subjenis":" • Harga kategori") +'</small></span></button>';}).join("");
  document.querySelectorAll("[data-subtype]").forEach(b=>b.onclick=()=>addSubtype(typeId,b.dataset.subtype));
  $("subtypeModal").style.display="flex";
 }
@@ -400,7 +400,7 @@ $("closeSubtype").onclick=closeSubtypeModal;
 function addSubtype(typeId,subtypeId){
  const category=wasteTypes.find(w=>w.id===typeId),item=(subtypes[categoryKey(category.nama)]||subtypes.lainnya).find(x=>x[0]===subtypeId);
  if(!category||!item)return;
- if(!selected[subtypeId])selected[subtypeId]={jenis_id:typeId,subjenis:item[1],name:item[1],emoji:item[2],weight:0,price:Number(category.harga_per_kg)||0};
+ if(!selected[subtypeId]){const subtypePrice=subtypePriceMap[typeId+":"+subtypeId];selected[subtypeId]={jenis_id:typeId,subjenis_id:subtypeId,subjenis:item[1],name:item[1],emoji:item[2],weight:0,price:Number(subtypePrice?.harga_per_kg??category.harga_per_kg)||0};}
  closeSubtypeModal();renderWaste();renderItems();
  const input=document.querySelector('[data-qty="'+subtypeId+'"]');if(input)input.focus();
 }
@@ -438,7 +438,7 @@ $("saveDemo").onclick=async()=>{
  $("saveDemo").disabled=true;$("saveDemo").textContent="Menyimpan…";
  try{
   pendingRequestId=pendingRequestId||crypto.randomUUID();
-  const payload=draft.map(x=>({jenis_id:x.jenis_id,subjenis:x.subjenis,berat_kg:x.weight}));
+  const payload=draft.map(x=>({jenis_id:x.jenis_id,subjenis_id:x.subjenis_id,subjenis:x.subjenis,berat_kg:x.weight}));
   const {data,error}=await supabase.rpc("esampah_catat_setoran",{
    p_request_id:pendingRequestId,p_nasabah_id:chosenCustomer.id,p_unit_id:profile.unit_id,
    p_items:payload,p_catatan:$("depositNote").value.trim()||null
@@ -450,24 +450,41 @@ $("saveDemo").onclick=async()=>{
  }catch(err){toast(err.message||"Gagal menyimpan setoran.");}
  finally{$("saveDemo").disabled=false;$("saveDemo").textContent="✓ Simpan Setoran";}
 };
-function renderPrices(){
+let subtypePriceMap={};
+async function renderPrices(){
  const isAdmin=profile.role==="admin_kecamatan";
+ const {data:prices,error}=await supabase.from("esampah_harga_subjenis").select("id,jenis_id,subjenis_id,nama,harga_per_kg,aktif").eq("aktif",true);
+ if(error){toast("Gagal memuat harga subjenis: "+error.message);return;}
+ subtypePriceMap={};
+ (prices||[]).forEach(p=>subtypePriceMap[p.jenis_id+":"+p.subjenis_id]=p);
  $("priceList").innerHTML=wasteTypes.map(w=>{
-   const children=subtypes[categoryKey(w.nama)]||[];
-   return '<div class="price-category"><div class="listrow"><div class="person">♻️</div><div style="flex:1;min-width:0"><strong>'+escapeHtml(w.nama)+'</strong><small>Harga kategori per '+escapeHtml(w.satuan||"kg")+'</small></div><div class="right"><b>'+(Number(w.harga_per_kg)>0?fmt(w.harga_per_kg):"Belum diatur")+'</b>'+(isAdmin?'<button class="small secondary btn" data-price-id="'+w.id+'">Ubah</button>':'')+'</div></div>'+(children.length?'<div class="price-subtypes">'+children.map(x=>'<span>'+x[2]+' '+escapeHtml(x[1])+'</span>').join("")+'</div>':'')+'</div>';
-  }).join("")||'<div class="empty">Belum ada jenis sampah.</div>';
+  const children=subtypes[categoryKey(w.nama)]||[];
+  const categoryPrice=Number(w.harga_per_kg)||0;
+  return '<div class="price-category" style="padding:14px;margin-bottom:12px;border:1px solid #e5eee8;border-radius:14px;background:#fff"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div style="min-width:0"><strong style="font-size:15px">'+escapeHtml(w.nama)+'</strong><div class="small muted">Harga dasar kategori / '+escapeHtml(w.satuan||"kg")+'</div></div><div style="text-align:right;white-space:nowrap"><b>'+fmt(categoryPrice)+'</b>'+(isAdmin?'<button class="small secondary btn" style="display:block;margin:6px 0 0 auto" data-category-price="'+w.id+'">Ubah harga dasar</button>':'')+'</div></div>'+(children.length?'<div style="margin-top:12px;border-top:1px solid #edf2ee;padding-top:8px"><div class="small muted" style="font-weight:700;margin-bottom:6px">HARGA PER SUBJENIS</div>'+children.map(([id,name,emoji])=>{const p=subtypePriceMap[w.id+":"+id];const price=Number(p?.harga_per_kg??categoryPrice)||0;return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #f0f3f1"><div style="min-width:0"><span>'+emoji+' <b>'+escapeHtml(name)+'</b></span><div class="small muted">'+(p?"Harga khusus subjenis":"Mengikuti harga dasar kategori")+'</div></div><div style="display:flex;align-items:center;gap:8px;white-space:nowrap"><b>'+fmt(price)+'/kg</b>'+(isAdmin?'<button class="btn small secondary" data-subtype-price="'+w.id+'" data-subtype-id="'+id+'" data-subtype-name="'+escapeHtml(name)+'">Edit</button>':'')+'</div></div>';}).join("")+'</div>':'')+'</div>';
+ }).join("")||'<div class="empty">Belum ada jenis sampah.</div>';
  $("editPrices").classList.toggle("hide",!isAdmin);
- document.querySelectorAll("[data-price-id]").forEach(btn=>btn.onclick=async()=>{
-  const item=wasteTypes.find(x=>x.id===btn.dataset.priceId);if(!item)return;
-  const raw=prompt("Harga "+item.nama+" per kg (rupiah, angka tanpa titik):",String(item.harga_per_kg||""));
+ document.querySelectorAll("[data-category-price]").forEach(btn=>btn.onclick=async()=>{
+  const item=wasteTypes.find(x=>x.id===btn.dataset.categoryPrice);if(!item)return;
+  const raw=prompt("Harga dasar "+item.nama+" per kg (rupiah):",String(item.harga_per_kg||""));
   if(raw===null)return;
-  const price=Number(raw.trim().replace(",","."));
+  const price=Number(raw.trim().replace(/\\./g,"").replace(",","."));
   if(!Number.isFinite(price)||price<0)return toast("Harga tidak valid.");
   const {error}=await supabase.rpc("esampah_set_harga",{p_jenis_id:item.id,p_harga:price});
   if(error)return toast(error.message);
-  await loadReferenceData();renderPrices();toast("Harga "+item.nama+" diperbarui.");
+  await loadReferenceData();await renderPrices();toast("Harga dasar diperbarui.");
  });
- $("editPrices").onclick=()=>toast("Ubah harga melalui tombol Ubah pada masing-masing jenis sampah.");
+ document.querySelectorAll("[data-subtype-price]").forEach(btn=>btn.onclick=async()=>{
+  const typeId=btn.dataset.subtypePrice,id=btn.dataset.subtypeId,name=btn.dataset.subtypeName;
+  const current=Number(subtypePriceMap[typeId+":"+id]?.harga_per_kg??wasteTypes.find(w=>w.id===typeId)?.harga_per_kg)||0;
+  const raw=prompt("Harga "+name+" per kg (rupiah):",String(current));
+  if(raw===null)return;
+  const price=Number(raw.trim().replace(/\\./g,"").replace(",","."));
+  if(!Number.isFinite(price)||price<0)return toast("Harga tidak valid.");
+  const {error}=await supabase.rpc("esampah_set_harga_subjenis",{p_jenis_id:typeId,p_subjenis_id:id,p_nama:name,p_harga:price});
+  if(error)return toast(error.message);
+  await renderPrices();toast("Harga "+name+" diperbarui.");
+ });
+ $("editPrices").onclick=()=>toast("Gunakan tombol Edit pada setiap subjenis atau Ubah harga dasar kategori.");
 }
 
 let adminUnits=[];
