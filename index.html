@@ -172,7 +172,8 @@ function go(id){
  if(id==="customers") loadCustomers();
  if(id==="prices") renderPrices();
  if(id==="savings") loadSavings();
- if(id==="reports") loadReports();\n if(id==="settings") loadAccountAdmin();
+ if(id==="reports") loadReports();
+ if(id==="settings") loadAccountAdmin();
 }
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 function showLoginError(msg){$("loginError").textContent=msg||"";}
