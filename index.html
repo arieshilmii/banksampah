@@ -128,23 +128,19 @@
   <div id="toast" class="toast"></div>
 </div>
 <script>
-/* Load Supabase with a fallback CDN so the login UI remains responsive if jsDelivr is unavailable. */
-window.__supabaseClientReady = new Promise((resolve, reject) => {
-  /* Same-origin Netlify proxy avoids direct mobile-browser access to public CDNs. */
-  const sources = ["/vendor/supabase.js"];
-  let index = 0;
-  const loadNext = () => {
-    if (window.supabase?.createClient) return resolve(window.supabase);
-    if (index >= sources.length) return reject(new Error("Pustaka koneksi belum dapat dimuat. Periksa koneksi internet lalu muat ulang halaman."));
-    const script = document.createElement("script");
-    script.src = sources[index++];
-    script.async = true;
-    script.onload = () => window.supabase?.createClient ? resolve(window.supabase) : loadNext();
-    script.onerror = loadNext;
-    document.head.appendChild(script);
-  };
-  loadNext();
-});
+/* Load Supabase as an ES module through a same-origin Netlify proxy.
+   The package root is ESM and does not guarantee window.supabase; use its named export. */
+window.__supabaseClientReady = import("/vendor/supabase.mjs")
+  .then((module) => {
+    if (typeof module.createClient !== "function") {
+      throw new Error("Supabase SDK berhasil diunduh, tetapi ekspor createClient tidak ditemukan.");
+    }
+    return { createClient: module.createClient };
+  })
+  .catch((error) => {
+    console.error("Supabase SDK gagal dimuat:", error);
+    throw new Error("Pustaka koneksi gagal diinisialisasi (" + (error?.message || "kesalahan modul") + ").");
+  });
 </script>
 <script>
 
