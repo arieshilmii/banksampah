@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
     global: { headers: { Authorization: authHeader } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: { user }, error: authError } = await caller.auth.getUser();
+  const { data: { user }, error: authError } = await caller.auth.getUser(authHeader.slice(7));
   if (authError || !user) return json({ error: "Sesi tidak valid" }, 401);
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
