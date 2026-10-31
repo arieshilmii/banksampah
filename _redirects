@@ -1,1 +1,2 @@
 /vendor/supabase.mjs https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm 200
+/npm/* https://cdn.jsdelivr.net/npm/:splat 200
