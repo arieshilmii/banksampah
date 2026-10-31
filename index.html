@@ -130,10 +130,8 @@
 <script>
 /* Load Supabase with a fallback CDN so the login UI remains responsive if jsDelivr is unavailable. */
 window.__supabaseClientReady = new Promise((resolve, reject) => {
-  const sources = [
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
-    "https://unpkg.com/@supabase/supabase-js@2"
-  ];
+  /* Same-origin Netlify proxy avoids direct mobile-browser access to public CDNs. */
+  const sources = ["/vendor/supabase.js"];
   let index = 0;
   const loadNext = () => {
     if (window.supabase?.createClient) return resolve(window.supabase);
