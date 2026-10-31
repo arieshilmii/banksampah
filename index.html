@@ -127,12 +127,38 @@
   </div>
   <div id="toast" class="toast"></div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* Load Supabase with a fallback CDN so the login UI remains responsive if jsDelivr is unavailable. */
+window.__supabaseClientReady = new Promise((resolve, reject) => {
+  const sources = [
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "https://unpkg.com/@supabase/supabase-js@2"
+  ];
+  let index = 0;
+  const loadNext = () => {
+    if (window.supabase?.createClient) return resolve(window.supabase);
+    if (index >= sources.length) return reject(new Error("Pustaka koneksi belum dapat dimuat. Periksa koneksi internet lalu muat ulang halaman."));
+    const script = document.createElement("script");
+    script.src = sources[index++];
+    script.async = true;
+    script.onload = () => window.supabase?.createClient ? resolve(window.supabase) : loadNext();
+    script.onerror = loadNext;
+    document.head.appendChild(script);
+  };
+  loadNext();
+});
+</script>
 <script>
 
 const SUPABASE_URL = "https://dibpprnbcgoxepaljyds.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Yu-89z6Ga_JsYRCePbR6rg_ZBhFA6Qi";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabase = null;
+async function ensureSupabase(){
+ if(supabase)return supabase;
+ const lib=await window.__supabaseClientReady;
+ supabase=lib.createClient(SUPABASE_URL,SUPABASE_KEY);
+ return supabase;
+}
 const fmt = n => "Rp" + Number(n||0).toLocaleString("id-ID");
 const fmtKg = n => Number(n||0).toLocaleString("id-ID",{maximumFractionDigits:3})+" kg";
 const $ = id => document.getElementById(id);
@@ -184,6 +210,7 @@ async function login(){
  if(!username||!password){showLoginError("Username dan password wajib diisi.");return;}
  $("loginBtn").disabled=true; $("loginBtn").textContent="Memeriksa akun…";
  try{
+  await ensureSupabase();
   const email=username+"@login.esampah.sukolilo.online";
   const {data,error}=await supabase.auth.signInWithPassword({email,password});
   if(error) throw error;
@@ -437,6 +464,7 @@ $("addCustomer").onclick=async()=>{
  }catch(err){toast(err.message||"Gagal menambahkan nasabah.");}
 };
 async function restoreSession(){
+ try{ await ensureSupabase(); }catch(err){ showLoginError(err.message||"Koneksi aplikasi belum siap. Muat ulang halaman."); return; }
  const {data}=await supabase.auth.getSession();
  if(!data.session)return;
  session=data.session;
