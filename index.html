@@ -108,8 +108,26 @@
   </section>
 
   <section id="savings" class="screen">
-    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Tabungan Nasabah</h1><p>Saldo dan riwayat mutasi tabungan.</p></header>
-    <main class="content"><div class="card"><span class="small muted">Total saldo nasabah contoh</span><h1 style="font-size:28px;margin:8px 0;color:#087b55">Rp1.245.000</h1><span class="pill">Unit operasional aktif</span></div><div class="section-head"><h2>Riwayat Mutasi</h2></div><div class="card"><div class="listrow"><div class="person">♻️</div><div><strong>Setoran sampah</strong><small>31 Okt 2026 • SET-DEMO-01</small></div><div class="right"><b style="color:#078254">+Rp23.000</b></div></div><div class="listrow"><div class="person">💸</div><div><strong>Penarikan tabungan</strong><small>25 Okt 2026</small></div><div class="right"><b style="color:#c34238">−Rp50.000</b></div></div></div><button class="btn primary full" id="withdrawBtn">Catat Penarikan (Preview)</button></main>
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Tabungan Nasabah</h1><p>Saldo, penarikan tunai, dan riwayat mutasi.</p></header>
+    <main class="content">
+      <div class="card"><span class="small muted">Total saldo seluruh nasabah aktif</span><h1 id="savingsTotal" style="font-size:28px;margin:8px 0;color:#087b55">Rp0</h1><span class="pill" id="savingsUnit">Unit operasional aktif</span></div>
+      <div class="section-head"><h2>Catat Penarikan Tunai</h2></div>
+      <div class="card">
+        <div class="field"><label for="withdrawCustomerSearch">Cari nasabah</label><input class="input" id="withdrawCustomerSearch" placeholder="Ketik nama atau kode nasabah..." autocomplete="off"></div>
+        <div id="withdrawCustomerResults"></div>
+        <div id="withdrawSelected" class="hide">
+          <div class="unit-switch"><div><strong id="withdrawCustomerName">Nasabah</strong><small id="withdrawCustomerCode" style="display:block"></small></div><button type="button" class="small" id="withdrawChangeCustomer">Ubah</button></div>
+          <div class="summaryline"><span>Saldo tersedia</span><b id="withdrawBalance">Rp0</b></div>
+          <div class="field"><label for="withdrawAmount">Nominal penarikan (Rp)</label><input class="input" id="withdrawAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Contoh: 50000"></div>
+          <div class="summaryline"><span>Saldo setelah penarikan</span><b id="withdrawAfter">Rp0</b></div>
+          <div class="field"><label for="withdrawNote">Keterangan (opsional)</label><textarea class="input" id="withdrawNote" rows="2" maxlength="300" placeholder="Contoh: Pengambilan tabungan oleh nasabah"></textarea></div>
+          <div class="demo">Pastikan uang tunai sudah benar-benar diserahkan kepada nasabah sebelum menekan tombol konfirmasi. Setelah disimpan, saldo langsung berkurang.</div>
+          <button class="btn primary full" id="confirmWithdraw">✓ Uang Tunai Sudah Diserahkan — Simpan</button>
+          <div id="withdrawFeedback" class="small muted" style="margin-top:9px"></div>
+        </div>
+      </div>
+      <div class="section-head"><h2>Riwayat Mutasi</h2></div><div class="card" id="savingsHistory"><div class="empty">Memuat riwayat…</div></div>
+    </main>
   </section>
 
   <section id="reports" class="screen">
@@ -491,14 +509,78 @@ async function createStaffAccount(){
  }catch(err){$("accountFeedback").textContent=err.message||"Gagal membuat akun.";}
  finally{$("createAccountBtn").disabled=false;$("createAccountBtn").textContent="Buat Akun Petugas";}
 }
+let withdrawCustomer=null;
+function updateWithdrawPreview(){
+ const amount=Math.max(0,Number($("withdrawAmount").value)||0);
+ const balance=Number(withdrawCustomer?.saldo||0);
+ $("withdrawAfter").textContent=fmt(Math.max(0,balance-amount));
+ $("withdrawAfter").style.color=amount>balance?"#c34238":"#087b55";
+}
+function renderWithdrawCustomerResults(){
+ const q=$("withdrawCustomerSearch").value.trim().toLowerCase();
+ const matches=customers.filter(c=>(c.nama+" "+c.kode_nasabah).toLowerCase().includes(q)).slice(0,12);
+ $("withdrawCustomerResults").innerHTML=matches.length?matches.map(c=>'<button type="button" class="listrow" data-withdraw-customer="'+c.id+'" style="width:100%;border:0;background:white;text-align:left"><div class="person">👤</div><div style="flex:1"><strong>'+escapeHtml(c.nama)+'</strong><small>'+escapeHtml(c.kode_nasabah)+' • Saldo '+fmt(c.saldo)+'</small></div></button>').join(""):(q?'<div class="empty">Nasabah tidak ditemukan.</div>':'<div class="empty">Ketik nama atau kode nasabah untuk mencari.</div>');
+ document.querySelectorAll("[data-withdraw-customer]").forEach(b=>b.onclick=()=>selectWithdrawCustomer(b.dataset.withdrawCustomer));
+}
+function selectWithdrawCustomer(id){
+ withdrawCustomer=customers.find(c=>c.id===id)||null;
+ if(!withdrawCustomer)return;
+ $("withdrawCustomerSearch").value="";
+ $("withdrawCustomerResults").innerHTML="";
+ $("withdrawSelected").classList.remove("hide");
+ $("withdrawCustomerName").textContent=withdrawCustomer.nama;
+ $("withdrawCustomerCode").textContent=withdrawCustomer.kode_nasabah;
+ $("withdrawBalance").textContent=fmt(withdrawCustomer.saldo);
+ $("withdrawAmount").value="";
+ $("withdrawNote").value="";
+ $("withdrawFeedback").textContent="";
+ updateWithdrawPreview();
+}
+function clearWithdrawCustomer(){
+ withdrawCustomer=null;
+ $("withdrawSelected").classList.add("hide");
+ $("withdrawCustomerSearch").value="";
+ $("withdrawCustomerResults").innerHTML="";
+ $("withdrawAmount").value="";
+ $("withdrawNote").value="";
+}
+$("withdrawCustomerSearch").addEventListener("focus",renderWithdrawCustomerResults);
+$("withdrawCustomerSearch").addEventListener("input",renderWithdrawCustomerResults);
+$("withdrawChangeCustomer").onclick=clearWithdrawCustomer;
+$("withdrawAmount").addEventListener("input",updateWithdrawPreview);
+$("confirmWithdraw").onclick=async()=>{
+ if(!withdrawCustomer)return toast("Pilih nasabah terlebih dahulu.");
+ const amount=Number($("withdrawAmount").value);
+ if(!Number.isFinite(amount)||amount<=0||!Number.isInteger(amount))return toast("Masukkan nominal penarikan berupa angka rupiah bulat yang lebih dari nol.");
+ if(amount>Number(withdrawCustomer.saldo||0))return toast("Nominal melebihi saldo nasabah.");
+ if(!confirm("Pastikan uang tunai Rp"+amount.toLocaleString("id-ID")+" sudah diserahkan kepada "+withdrawCustomer.nama+". Lanjutkan pencatatan?"))return;
+ const btn=$("confirmWithdraw");btn.disabled=true;btn.textContent="Menyimpan penarikan…";
+ try{
+  const {data,error}=await supabase.rpc("esampah_catat_penarikan",{
+   p_request_id:crypto.randomUUID(),p_nasabah_id:withdrawCustomer.id,p_unit_id:profile.unit_id,
+   p_nominal:amount,p_keterangan:$("withdrawNote").value.trim()||null
+  });
+  if(error)throw error;
+  toast("Penarikan tercatat. Saldo tersisa "+fmt(data.saldo)+".");
+  clearWithdrawCustomer();
+  await loadCustomers();
+  await loadHome();
+  await loadSavings();
+ }catch(err){$("withdrawFeedback").textContent=err.message||"Gagal menyimpan penarikan.";toast(err.message||"Gagal menyimpan penarikan.");}
+ finally{btn.disabled=false;btn.textContent="✓ Uang Tunai Sudah Diserahkan — Simpan";}
+};
 async function loadSavings(){
- const {data,error}=await supabase.from("esampah_mutasi").select("id,tipe,nominal,saldo_setelah,keterangan,created_at,nasabah:esampah_nasabah(nama,kode_nasabah)").order("created_at",{ascending:false}).limit(100);
- if(error){toast(error.message);return;}
- const total=(data||[]).reduce((s,x)=>s+(x.tipe==="setoran"?Number(x.nominal):0),0);
- $("savings").querySelector(".card").innerHTML='<span class="small muted">Akumulasi nilai setoran pada data yang tampil</span><h1 style="font-size:28px;margin:8px 0;color:#087b55">'+fmt(total)+'</h1><span class="pill">'+(profile.unit_nama||"Unit aktif")+'</span>';
- const cards=$("savings").querySelectorAll(".card");
- if(cards[1])cards[1].innerHTML=(data||[]).length?data.map(x=>'<div class="listrow"><div class="person">'+(x.tipe==="setoran"?"♻️":"💸")+'</div><div><strong>'+escapeHtml(x.nasabah?.nama||"Nasabah")+'</strong><small>'+escapeHtml(x.keterangan||x.tipe)+' • '+new Date(x.created_at).toLocaleString("id-ID")+'</small><small>Saldo setelah transaksi: '+fmt(x.saldo_setelah)+'</small></div><div class="right"><b style="color:'+(x.tipe==="setoran"?"#078254":"#c34238")+'">'+(x.tipe==="setoran"?"+":"−")+fmt(x.nominal)+'</b></div></div>').join(""):'<div class="empty">Belum ada riwayat mutasi.</div>';
- $("withdrawBtn").onclick=()=>toast("Penarikan belum diaktifkan. Saldo hanya dapat bertambah melalui setoran pada tahap ini.");
+ const [{data,error},{data:customerRows,error:customerError}]=await Promise.all([
+  supabase.from("esampah_mutasi").select("id,tipe,nominal,saldo_setelah,keterangan,created_at,nasabah:esampah_nasabah(nama,kode_nasabah)").order("created_at",{ascending:false}).limit(100),
+  supabase.from("esampah_nasabah").select("id,saldo").eq("status","aktif")
+ ]);
+ if(error||customerError){toast(error?.message||customerError?.message||"Gagal memuat tabungan.");return;}
+ customers=customerRows||[];
+ $("savingsTotal").textContent=fmt(customers.reduce((sum,c)=>sum+Number(c.saldo||0),0));
+ $("savingsUnit").textContent=profile.unit_nama||"Unit aktif";
+ if(!withdrawCustomer||!customers.some(c=>c.id===withdrawCustomer.id))clearWithdrawCustomer();
+ const rows=data||[];
+ $("savingsHistory").innerHTML=rows.length?rows.map(x=>'<div class="listrow"><div class="person">'+(x.tipe==="setoran"?"♻️":"💸")+'</div><div style="flex:1;min-width:0"><strong>'+escapeHtml(x.nasabah?.nama||"Nasabah")+'</strong><small>'+escapeHtml(x.keterangan||x.tipe)+' • '+new Date(x.created_at).toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})+'</small><small>Saldo setelah transaksi: '+fmt(x.saldo_setelah)+'</small></div><div class="right"><b style="color:'+(x.tipe==="setoran"?"#078254":"#c34238")+'">'+(x.tipe==="setoran"?"+":"−")+fmt(x.nominal)+'</b></div></div>').join(""):'<div class="empty">Belum ada riwayat mutasi.</div>';
 }
 async function loadReports(){
  const {data,error}=await supabase.from("esampah_transaksi").select("id,berat_kg,total,status,disetor_at,jenis:esampah_jenis(nama)").order("disetor_at",{ascending:false}).limit(1000);
