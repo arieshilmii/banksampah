@@ -149,7 +149,7 @@ const subtypes={
  jelantah:[["jelantah","Minyak Jelantah","🛢️"]],
  lainnya:[["lainnya-umum","Lainnya (uraian dicatat di catatan)","♻️"]]
 };
-let session=null, profile=null, wasteTypes=[], customers=[], selected={}, draft=[], chosenCustomer=null, activeScreen="home";
+let session=null, profile=null, wasteTypes=[], customers=[], selected={}, draft=[], chosenCustomer=null, activeScreen="home", pendingRequestId=null;
 const categoryKey = name => {
  const n=(name||"").toLowerCase();
  if(n.includes("pet")) return "pet";
@@ -332,15 +332,15 @@ $("saveDemo").onclick=async()=>{
  if(!session||!profile||!chosenCustomer||!draft.length)return toast("Data setoran belum lengkap.");
  $("saveDemo").disabled=true;$("saveDemo").textContent="Menyimpan…";
  try{
-  const requestId=crypto.randomUUID();
+  pendingRequestId=pendingRequestId||crypto.randomUUID();
   const payload=draft.map(x=>({jenis_id:x.jenis_id,subjenis:x.subjenis,berat_kg:x.weight}));
   const {data,error}=await supabase.rpc("esampah_catat_setoran",{
-   p_request_id:requestId,p_nasabah_id:chosenCustomer.id,p_unit_id:profile.unit_id,
+   p_request_id:pendingRequestId,p_nasabah_id:chosenCustomer.id,p_unit_id:profile.unit_id,
    p_items:payload,p_catatan:$("depositNote").value.trim()||null
   });
   if(error)throw error;
   toast("Setoran tersimpan. Saldo bertambah "+fmt(data.total_nilai)+". Saldo sekarang "+fmt(data.saldo)+".");
-  selected={};draft=[];chosenCustomer=null;$("selectedCustomer").classList.add("hide");$("customerSearch").classList.remove("hide");$("customerSearch").value="";$("customerResults").innerHTML="";$("depositNote").value="";
+  selected={};draft=[];pendingRequestId=null;chosenCustomer=null;$("selectedCustomer").classList.add("hide");$("customerSearch").classList.remove("hide");$("customerSearch").value="";$("customerResults").innerHTML="";$("depositNote").value="";
   await loadHome();go("home");
  }catch(err){toast(err.message||"Gagal menyimpan setoran.");}
  finally{$("saveDemo").disabled=false;$("saveDemo").textContent="✓ Simpan Setoran";}
@@ -404,7 +404,8 @@ async function loadReports(){
  if(error){toast(error.message);return;}
  const rows=data||[],kg=rows.reduce((s,x)=>s+Number(x.berat_kg),0),money=rows.reduce((s,x)=>s+Number(x.total),0);
  const stats=$("reports").querySelectorAll(".stat strong");
- if(stats.length>=4){stats[0].textContent=fmtKg(kg);stats[1].textContent=fmt(money);stats[2].textContent=String(new Set(rows.map(x=>x.jenis?.nama)).size);stats[3].textContent=String(rows.length);}
+ const {count:customerCount}=await supabase.from("esampah_nasabah").select("id",{count:"exact",head:true});
+ if(stats.length>=4){stats[0].textContent=fmtKg(kg);stats[1].textContent=fmt(money);stats[2].textContent=String(customerCount||0);stats[3].textContent=String(wasteTypes.length);}
  $("reports").querySelector(".chart").innerHTML='<div class="empty">Grafik akan terbentuk setelah transaksi mulai dicatat.</div>';
  const comp=$("reports").querySelectorAll(".card")[1];
  if(comp)comp.innerHTML=rows.length?'<div class="summaryline"><span>Transaksi tercatat</span><b>'+rows.length+'</b></div><div class="summaryline"><span>Total berat</span><b>'+fmtKg(kg)+'</b></div><div class="summaryline"><span>Total nilai</span><b>'+fmt(money)+'</b></div>':'<div class="empty">Belum ada transaksi untuk direkap.</div>';
