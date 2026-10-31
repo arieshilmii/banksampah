@@ -267,6 +267,10 @@ async function loadReferenceData(){
  const {data,error}=await supabase.from("esampah_jenis").select("id,nama,satuan,harga_per_kg,aktif").eq("aktif",true).order("nama");
  if(error) throw error;
  wasteTypes=data||[];
+ const {data:subtypePrices,error:subtypePriceError}=await supabase.from("esampah_harga_subjenis").select("id,jenis_id,subjenis_id,nama,harga_per_kg,aktif").eq("aktif",true);
+ if(subtypePriceError)throw subtypePriceError;
+ subtypePriceMap={};
+ (subtypePrices||[]).forEach(p=>subtypePriceMap[p.jenis_id+":"+p.subjenis_id]=p);
 }
 function updateIdentity(){
  const first=(profile.nama||profile.username||"Petugas").split(" ")[0];
