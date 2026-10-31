@@ -221,14 +221,17 @@ async function login(){
   $("loginPassword").value="";
   go("home");
  }catch(err){
-  await supabase.auth.signOut();
+  const message=err?.message||"Login gagal. Periksa koneksi dan username/password.";
+  if(supabase?.auth){try{await supabase.auth.signOut();}catch(signOutError){console.warn("Gagal membersihkan sesi:",signOutError);}}
   session=null;profile=null;
-  showLoginError(err.message||"Login gagal. Periksa username dan password.");
+  showLoginError(message);
+  console.error("E-Sampah login gagal:",err);
  }finally{
   $("loginBtn").disabled=false;$("loginBtn").textContent="Masuk ke E-Sampah →";
  }
 }
-$("loginBtn").addEventListener("click",login);
+$("loginBtn").onclick = login;
+$("loginPassword").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();login();}});
 $("loginPassword").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
 async function loadReferenceData(){
  const {data,error}=await supabase.from("esampah_jenis").select("id,nama,satuan,harga_per_kg,aktif").eq("aktif",true).order("nama");
