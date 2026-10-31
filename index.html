@@ -226,7 +226,7 @@ function updateIdentity(){
 async function loadHome(){
  updateIdentity();
  const [{data:tx,error:txErr},{count:customerCount,error:cErr}]=await Promise.all([
-  supabase.from("esampah_transaksi").select("id,berat_kg,total,disetor_at,nasabah:esampah_nasabah(nama)").order("disetor_at",{ascending:false}).limit(8),
+  supabase.from("esampah_transaksi").select("id,berat_kg,total,disetor_at,nasabah:esampah_nasabah(nama)").order("disetor_at",{ascending:false}).limit(1000),
   supabase.from("esampah_nasabah").select("id",{count:"exact",head:true})
  ]);
  if(txErr) throw txErr;if(cErr) throw cErr;
@@ -238,7 +238,7 @@ async function loadHome(){
  const stat=$("home").querySelectorAll(".stat strong");
  if(stat.length>=4){stat[0].textContent=fmtKg(kg);stat[1].textContent=fmt(money);stat[2].textContent=String(customerCount||0);stat[3].textContent=String(todays.length);}
  $("home").querySelector(".section-head .muted").textContent=today.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
- $("recentList").innerHTML=rows.length?rows.map(x=>'<div class="listrow"><div class="person">♻️</div><div><strong>'+escapeHtml(x.nasabah?.nama||"Nasabah")+'</strong><small>'+new Date(x.disetor_at).toLocaleString("id-ID")+'</small></div><div class="right"><b>'+fmtKg(x.berat_kg)+'</b><small>'+fmt(x.total)+'</small></div></div>').join(""):'<div class="empty">Belum ada transaksi setoran.</div>';
+ $("recentList").innerHTML=rows.length?rows.slice(0,8).map(x=>'<div class="listrow"><div class="person">♻️</div><div><strong>'+escapeHtml(x.nasabah?.nama||"Nasabah")+'</strong><small>'+new Date(x.disetor_at).toLocaleString("id-ID")+'</small></div><div class="right"><b>'+fmtKg(x.berat_kg)+'</b><small>'+fmt(x.total)+'</small></div></div>').join(""):'<div class="empty">Belum ada transaksi setoran.</div>';
 }
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 async function loadCustomers(){
