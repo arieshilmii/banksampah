@@ -49,13 +49,17 @@ Deno.serve(async (req: Request) => {
   if (!["admin_kecamatan","admin_kelurahan","petugas_rw","pimpinan"].includes(role)) return json({ error: "Peran tidak valid" }, 400);
 
   const [{ data: staff }, { data: unit }] = await Promise.all([
-    admin.from("staff_master").select("id,nama,aktif,deleted_at").eq("id", staffId).maybeSingle(),
-    admin.from("esampah_unit").select("id,nama,tipe,aktif").eq("id", unitId).maybeSingle(),
+    admin.from("staff_master").select("id,nama,aktif,deleted_at,kelurahan_id").eq("id", staffId).maybeSingle(),
+    admin.from("esampah_unit").select("id,nama,tipe,kelurahan_id,aktif").eq("id", unitId).maybeSingle(),
   ]);
   if (!staff?.aktif || staff.deleted_at) return json({ error: "Pegawai tidak aktif/tidak ditemukan di master SDM" }, 400);
   if (!unit?.aktif) return json({ error: "Unit bank sampah tidak aktif/tidak ditemukan" }, 400);
   const expectedType = role === "admin_kelurahan" ? "kelurahan" : role === "petugas_rw" ? "rw" : "kecamatan";
   if (unit.tipe !== expectedType) return json({ error: "Peran tidak sesuai dengan jenis unit yang dipilih" }, 400);
+  if ((role === "admin_kelurahan" || role === "petugas_rw") &&
+      staff.kelurahan_id && staff.kelurahan_id !== unit.kelurahan_id) {
+    return json({ error: "Pegawai dan unit penugasan harus berada pada kelurahan yang sama" }, 400);
+  }
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email: username + "@login.esampah.sukolilo.online",
