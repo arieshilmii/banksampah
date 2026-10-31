@@ -140,8 +140,8 @@
     <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Pengaturan Unit</h1><p>Profil petugas dan unit bank sampah.</p></header>
     <main class="content"><div id="accountAdminPanel" class="card hide">
   <h2 style="font-size:15px;margin:0 0 12px">Manajemen Akun E-Sampah</h2>
-  <p class="small muted">Buat akun terpisah dari SIMPeL. Nama dan jabatan diambil dari master pegawai.</p>
-  <div class="field"><label>Pegawai</label><select class="input" id="accountStaff"><option value="">Memuat pegawai…</option></select></div>
+  <p class="small muted">Buat akun E-Sampah untuk pegawai, pengelola, atau warga. Nama diisi langsung dan tidak harus terdaftar di master pegawai.</p>
+  <div class="field"><label>Nama lengkap</label><input class="input" id="accountFullName" autocomplete="name" maxlength="120" placeholder="Masukkan nama lengkap"></div>
   <div class="field"><label>Peran aplikasi</label><select class="input" id="accountRole"><option value="admin_kelurahan">Admin Kelurahan</option><option value="petugas_rw">Petugas RW</option><option value="pimpinan">Pimpinan</option><option value="admin_kecamatan">Admin Kecamatan</option></select></div>
   <div class="field"><label>Unit operasional / penugasan</label><select class="input" id="accountUnit"><option value="">Pilih unit</option></select></div>
   <div class="field"><label>Username E-Sampah</label><input class="input" id="accountUsername" autocomplete="off" placeholder="contoh: petugas_keputih"></div>
@@ -470,24 +470,20 @@ function renderPrices(){
  $("editPrices").onclick=()=>toast("Ubah harga melalui tombol Ubah pada masing-masing jenis sampah.");
 }
 
-let adminStaffOptions=[], adminUnits=[];
+let adminUnits=[];
 async function loadAccountAdmin(){
  const panel=$("accountAdminPanel");
  if(profile.role!=="admin_kecamatan"){panel.classList.add("hide");return;}
  panel.classList.remove("hide");
- if(adminStaffOptions.length&&adminUnits.length)return;
- $("accountFeedback").textContent="Memuat data pegawai dan unit…";
- const [{data:staff,error:staffError},{data:units,error:unitError}]=await Promise.all([
-  supabase.rpc("esampah_daftar_pegawai_aktif"),
-  supabase.from("esampah_unit").select("id,nama,tipe,kelurahan_id,rw").eq("aktif",true).order("nama")
- ]);
- if(staffError||unitError){$("accountFeedback").textContent=staffError?.message||unitError?.message;return;}
- adminStaffOptions=staff||[];adminUnits=units||[];
- $("accountStaff").innerHTML='<option value="">Pilih pegawai</option>'+adminStaffOptions.map(s=>'<option value="'+s.id+'">'+escapeHtml(s.nama)+' — '+escapeHtml(s.jabatan||s.unit_kerja||"")+'</option>').join("");
+ if(adminUnits.length)return;
+ $("accountFeedback").textContent="Memuat daftar unit…";
+ const {data:units,error}=await supabase.from("esampah_unit").select("id,nama,tipe,kelurahan_id,rw").eq("aktif",true).order("nama");
+ if(error){$("accountFeedback").textContent=error.message;return;}
+ adminUnits=units||[];
  $("accountRole").onchange=renderAccountUnits;
  renderAccountUnits();
  $("createAccountBtn").onclick=createStaffAccount;
- $("accountFeedback").textContent="Pilih pegawai, peran, unit, username, dan password awal.";
+ $("accountFeedback").textContent="Isi nama, peran, unit, username, dan password awal.";
 }
 function renderAccountUnits(){
  const role=$("accountRole").value;
@@ -496,16 +492,16 @@ function renderAccountUnits(){
  $("accountUnit").innerHTML='<option value="">Pilih unit</option>'+options.map(u=>'<option value="'+u.id+'">'+escapeHtml(u.nama)+'</option>').join("");
 }
 async function createStaffAccount(){
- const staffId=$("accountStaff").value,role=$("accountRole").value,unitId=$("accountUnit").value;
+ const nama=$("accountFullName").value.trim(),role=$("accountRole").value,unitId=$("accountUnit").value;
  const username=$("accountUsername").value.trim().toLowerCase(),password=$("accountPassword").value;
- if(!staffId||!unitId||!username||!password){$("accountFeedback").textContent="Semua kolom wajib diisi.";return;}
+ if(nama.length<2||!unitId||!username||!password){$("accountFeedback").textContent="Nama lengkap, unit, username, dan password wajib diisi.";return;}
  $("createAccountBtn").disabled=true;$("createAccountBtn").textContent="Membuat akun…";
  try{
-  const {data,error}=await supabase.functions.invoke("esampah-manage-users",{body:{action:"create",staff_master_id:staffId,role,unit_id:unitId,username,password}});
+  const {data,error}=await supabase.functions.invoke("esampah-manage-users",{body:{action:"create",nama,role,unit_id:unitId,username,password}});
   if(error)throw error;
   if(data?.error)throw new Error(data.error);
   $("accountFeedback").textContent="Akun "+data.nama+" berhasil dibuat ("+data.petugas.username+").";
-  $("accountUsername").value="";$("accountPassword").value="";$("accountStaff").value="";
+  $("accountFullName").value="";$("accountUsername").value="";$("accountPassword").value="";
   toast("Akun E-Sampah berhasil dibuat.");
  }catch(err){$("accountFeedback").textContent=err.message||"Gagal membuat akun.";}
  finally{$("createAccountBtn").disabled=false;$("createAccountBtn").textContent="Buat Akun Petugas";}
