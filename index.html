@@ -346,8 +346,20 @@ $("saveDemo").onclick=async()=>{
  finally{$("saveDemo").disabled=false;$("saveDemo").textContent="✓ Simpan Setoran";}
 };
 function renderPrices(){
- $("priceList").innerHTML=wasteTypes.map(w=>'<div class="listrow"><div class="person">♻️</div><div><strong>'+escapeHtml(w.nama)+'</strong><small>Harga per '+escapeHtml(w.satuan||"kg")+'</small></div><div class="right"><b>'+(Number(w.harga_per_kg)>0?fmt(w.harga_per_kg):"Belum diatur")+'</b></div></div>').join("")||'<div class="empty">Belum ada jenis sampah.</div>';
- $("editPrices").onclick=()=>toast("Pengaturan harga akan dibuka melalui akun Admin Kecamatan.");
+ const isAdmin=profile.role==="admin_kecamatan";
+ $("priceList").innerHTML=wasteTypes.map(w=>'<div class="listrow"><div class="person">♻️</div><div><strong>'+escapeHtml(w.nama)+'</strong><small>Harga per '+escapeHtml(w.satuan||"kg")+'</small></div><div class="right"><b>'+(Number(w.harga_per_kg)>0?fmt(w.harga_per_kg):"Belum diatur")+'</b>'+(isAdmin?'<button class="small secondary btn" data-price-id="'+w.id+'">Ubah</button>':'')+'</div></div>').join("")||'<div class="empty">Belum ada jenis sampah.</div>';
+ $("editPrices").classList.toggle("hide",!isAdmin);
+ document.querySelectorAll("[data-price-id]").forEach(btn=>btn.onclick=async()=>{
+  const item=wasteTypes.find(x=>x.id===btn.dataset.priceId);if(!item)return;
+  const raw=prompt("Harga "+item.nama+" per kg (rupiah, angka tanpa titik):",String(item.harga_per_kg||""));
+  if(raw===null)return;
+  const price=Number(raw.trim().replace(",","."));
+  if(!Number.isFinite(price)||price<0)return toast("Harga tidak valid.");
+  const {error}=await supabase.rpc("esampah_set_harga",{p_jenis_id:item.id,p_harga:price});
+  if(error)return toast(error.message);
+  await loadReferenceData();renderPrices();toast("Harga "+item.nama+" diperbarui.");
+ });
+ $("editPrices").onclick=()=>toast("Ubah harga melalui tombol Ubah pada masing-masing jenis sampah.");
 }
 
 let adminStaffOptions=[], adminUnits=[];
