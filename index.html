@@ -1,357 +1,686 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#213c2d">
-  <title>Bank Sampah Kecamatan Sukolilo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex; justify-content: center; align-items: center; position: relative;
-      background: #2e4a38; overflow-x: hidden;
-    }
-    body::before {
-      content: ""; position: fixed; inset: -5%; z-index: -1;
-      background-image: url('assets/bg.jpg'), url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1080');
-      background-size: cover; background-position: center; filter: blur(8px); opacity: .85;
-    }
-    button, input { font: inherit; }
-    .glass-card {
-      background: rgba(255,255,255,.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,.4); border-radius: 20px; padding: 25px;
-      width: 90%; max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,.2); margin: auto; z-index: 10;
-    }
-    .glass-card h2 { text-align: center; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,.5); margin: 0 0 20px; font-size: 20px; }
-    .form-group { position: relative; margin-bottom: 15px; }
-    label { display:block; margin-bottom:6px; color:#fff; text-shadow:1px 1px 2px rgba(0,0,0,.5); font-weight:600; font-size:13px; }
-    input { width:100%; padding:11px; border:1px solid rgba(255,255,255,.5); border-radius:10px; background:rgba(255,255,255,.8); color:#1e362a; font-size:14px; outline:none; }
-    input[readonly] { background: rgba(230,230,230,.6); color:#2c4c3b; font-weight:600; }
-    #dropdown-list { position:absolute; top:100%; left:0; right:0; background:#fff; border-radius:10px; max-height:180px; overflow-y:auto; z-index:99; display:none; box-shadow:0 8px 20px rgba(0,0,0,.25); }
-    .dropdown-item { padding:10px 12px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
-    .item-nama { font-weight:700; color:#2c4c3b; font-size:13px; }
-    .item-unit { font-size:11px; color:#6c757d; margin-top:2px; }
-    .btn-submit { width:100%; padding:13px; background:#4a7c59; color:#fff; border:0; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-top:5px; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087b55">
+<title>Bank Sampah Sukolilo</title>
+<style>.subtype-overlay{position:fixed;inset:0;background:rgba(15,32,26,.55);z-index:1000;display:none;align-items:flex-end;justify-content:center}.subtype-overlay.open{display:flex}.subtype-sheet{background:#f7faf8;width:100%;max-width:520px;max-height:82vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px 18px 28px;box-shadow:0 -12px 40px rgba(0,0,0,.18)}.subtype-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}.subtype-head h3{margin:0;color:#183b31;font-size:19px}.subtype-head p{margin:5px 0 0;color:#718078;font-size:13px}.subtype-close{border:0;border-radius:50%;width:36px;height:36px;background:#e9efeb;color:#38584a;font-size:20px}.subtype-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}.subtype-option{border:1px solid #e1e9e4;background:#fff;border-radius:15px;padding:14px 10px;text-align:left;min-height:78px;display:flex;gap:10px;align-items:center;color:#1c352b}.subtype-emoji{font-size:25px}.subtype-option strong{display:block;font-size:13px}.subtype-option small{display:block;color:#7b8982;font-size:11px;margin-top:4px}.subtype-empty{grid-column:1/-1;padding:20px;text-align:center;color:#738078;background:white;border-radius:14px}
+:root{--green:#087b55;--green2:#0ca66b;--mint:#e9f8f0;--ink:#102b48;--muted:#6c8095;--line:#e6edf2;--blue:#eaf3ff;--gold:#fff5dc;--purple:#f2edff;--shadow:0 8px 26px rgba(16,43,72,.08)}
+*{box-sizing:border-box}body{margin:0;background:#f3f7f9;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:480px;min-height:100dvh;margin:auto;background:#f8fbfc;position:relative;padding-bottom:86px;box-shadow:0 0 40px rgba(12,45,65,.08)}.top{background:linear-gradient(135deg,#075b4b,#0b9870);color:#fff;padding:calc(16px + env(safe-area-inset-top)) 18px 20px;border-radius:0 0 24px 24px}.topline{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.1px}.brandmark{width:40px;height:40px;border-radius:14px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:23px}.brand small{display:block;font-weight:500;font-size:11px;opacity:.82;letter-spacing:.4px}.avatar{width:36px;height:36px;border-radius:50%;background:#dff5e9;color:#075b4b;display:grid;place-items:center;font-weight:800}.top h1{font-size:21px;line-height:1.2;margin:18px 0 5px}.top p{margin:0;font-size:12px;opacity:.84}.content{padding:16px 16px 24px}.demo{background:#fff7df;border:1px solid #f5e5b8;color:#775b16;padding:9px 12px;border-radius:12px;font-size:11px;line-height:1.45;margin-bottom:13px}.section-head{display:flex;justify-content:space-between;align-items:center;margin:17px 0 10px}.section-head h2{font-size:15px;margin:0}.muted{color:var(--muted)}.small{font-size:11px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;box-shadow:var(--shadow);min-height:90px}.stat .ico{width:31px;height:31px;border-radius:11px;display:grid;place-items:center;font-size:17px;margin-bottom:8px}.stat strong{display:block;font-size:18px;letter-spacing:-.4px}.stat span{font-size:10px;color:var(--muted)}.green{background:#e3f8ed;color:#078254}.blue{background:#e9f2ff;color:#2876d7}.gold{background:#fff3d6;color:#c38410}.purple{background:#f0eaff;color:#8059ce}.card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:14px;box-shadow:var(--shadow);margin-bottom:11px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.btn{border:0;border-radius:13px;padding:12px 14px;font-weight:750}.primary{background:linear-gradient(135deg,#0a9d69,#087b55);color:#fff}.secondary{background:#e9f7f0;color:#087b55}.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff0ef;color:#c34238}.full{width:100%}.input{width:100%;border:1px solid #dce6ed;border-radius:12px;padding:12px 13px;background:#fff;color:var(--ink);outline:none}.input:focus{border-color:#20a879;box-shadow:0 0 0 3px rgba(32,168,121,.12)}label{font-size:11px;font-weight:750;display:block;margin:0 0 6px;color:#4b6076}.field{margin-bottom:12px}.pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:30px;font-size:10px;font-weight:750;background:#e9f7f0;color:#087b55}.tabs{display:flex;gap:5px;background:#edf3f6;border-radius:12px;padding:4px;margin:12px 0}.tabs button{flex:1;border:0;border-radius:9px;background:transparent;padding:9px 5px;font-size:10px;color:#60748a;font-weight:700}.tabs button.active{background:#07845d;color:#fff;box-shadow:0 3px 9px #0b805333}.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.quick button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;text-align:left;min-height:104px;box-shadow:var(--shadow)}.quick .qico{font-size:23px;margin-bottom:8px}.quick strong{display:block;font-size:12px}.quick span{font-size:10px;color:var(--muted)}.listrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #edf1f4}.listrow:last-child{border:0}.person{width:38px;height:38px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:#e6f3f4;font-size:18px}.listrow strong{font-size:12px;display:block}.listrow small{font-size:10px;color:var(--muted)}.listrow .right{margin-left:auto;text-align:right;flex:0 0 88px;min-width:88px}.recent-row{align-items:center}.recent-info{flex:1;min-width:0}.recent-info strong{overflow-wrap:anywhere}.recent-values{margin-left:auto;flex:0 0 82px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-variant-numeric:tabular-nums}.recent-values b{font-size:15px;white-space:nowrap}.recent-values small{font-size:11px;white-space:nowrap;color:var(--muted)}.price-category{padding-bottom:5px;border-bottom:1px solid #edf1f4}.price-category:last-child{border-bottom:0}.price-subtypes{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 12px 48px}.price-subtypes span{font-size:10px;color:#49675a;background:#eef7f1;border:1px solid #e0eee5;border-radius:20px;padding:5px 8px}.bottom{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,480px);padding:9px 9px calc(9px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;justify-content:space-around}.bottom button{border:0;background:transparent;color:#8798a7;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;min-width:52px}.bottom button b{font-size:19px;font-weight:500}.bottom button.active{color:#07845d;font-weight:800}.screen{display:none}.screen.active{display:block}.login{padding:18px}.hero{background:linear-gradient(160deg,#dff7ee,#eaf4ff);border-radius:22px;padding:25px 18px 20px;text-align:center;position:relative;overflow:hidden;margin-bottom:16px}.hero .recycle{font-size:54px}.hero h1{font-size:24px;margin:5px 0;color:#075b4b}.hero p{font-size:12px;color:#527268;margin:0}.loginbox{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}.loginbox h2{font-size:19px;margin:0 0 5px}.loginbox>p{font-size:11px;color:var(--muted);margin:0 0 17px}.login-note{font-size:10px;color:#74899a;text-align:center;line-height:1.5;margin-top:12px}.unit-switch{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:#eff8f4;border-radius:12px;margin:12px 0;font-size:11px}.unit-switch strong{color:#087b55}.waste-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.waste{border:1px solid var(--line);border-radius:13px;background:#fff;padding:11px 5px;text-align:center;min-height:105px;position:relative}.waste.selected{border:2px solid #0ca66b;background:#f0fbf5;padding:10px 4px}.waste .wi{font-size:26px;display:block;margin-bottom:5px}.waste strong{font-size:10px;display:block;line-height:1.2}.waste small{font-size:9px;color:var(--muted);display:block;margin-top:5px}.check{position:absolute;right:6px;top:5px;background:#0ca66b;color:#fff;border-radius:50%;width:17px;height:17px;font-size:11px;display:grid;place-items:center}.qty{display:flex;align-items:center;gap:7px;margin-top:8px}.qty input{width:100%;max-width:155px;min-width:0;text-align:left;font-weight:700;padding:10px 12px}.qty span{font-size:11px;color:var(--muted)}.summaryline{display:flex;justify-content:space-between;padding:7px 0;font-size:11px}.total{background:#eaf8f0;border-radius:13px;padding:12px;margin:10px 0}.total strong{font-size:17px;color:#078254}.chart{height:132px;display:flex;align-items:flex-end;gap:10px;padding:12px 4px 22px;border-bottom:1px solid var(--line)}.barwrap{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.bar{width:65%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#48c88e,#07845d);min-height:5px}.barwrap small{font-size:8px;color:var(--muted)}.chartlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:9px;color:var(--muted)}.toast{position:fixed;z-index:50;bottom:90px;left:50%;transform:translateX(-50%);width:calc(100% - 34px);max-width:440px;background:#153c35;color:#fff;border-radius:12px;padding:12px 14px;font-size:11px;box-shadow:0 10px 28px #0002;display:none}.toast.show{display:block}.hide{display:none!important}.badge{font-size:9px;padding:4px 7px;border-radius:20px;background:#eef3f6;color:#64788a}.filterline{display:flex;gap:8px}.filterline select{flex:1}.empty{padding:26px 12px;text-align:center;color:var(--muted);font-size:11px}.login-role{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.login-role button{background:#f4f8fa;border:1px solid var(--line);border-radius:11px;padding:9px;font-size:10px;color:#526a7e}.login-role button.active{background:#e8f8ef;border-color:#0ca66b;color:#087b55;font-weight:800}@media(min-width:700px){body{padding:24px 0}.app{border-radius:24px;overflow:hidden;min-height:calc(100vh - 48px)}.bottom{bottom:24px;border-radius:0 0 24px 24px}}
 
-    #halaman-beranda { display:none; width:100%; max-width:400px; padding:15px; margin:auto; z-index:10; height:100vh; overflow-y:auto; }
-    .header-beranda { background:rgba(255,255,255,.2); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.4); border-radius:15px; padding:20px 15px; color:#fff; text-shadow:1px 1px 3px rgba(0,0,0,.5); margin-bottom:15px; display:flex; flex-direction:column; gap:12px; }
-    .profile-section h2 { margin:0; font-size:22px; }
-    .profile-section p { margin:4px 0 0; font-size:12px; opacity:.9; }
-    .rekap-card { background:rgba(255,255,255,.9); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; color:#1e362a; text-shadow:none; box-shadow:0 4px 10px rgba(0,0,0,.15); }
-    .rekap-item { text-align:center; flex:1; }
-    .rekap-divider { width:1px; height:30px; background:#dcdcdc; }
-    .rekap-label { font-size:10px; color:#6c757d; font-weight:700; text-transform:uppercase; margin-bottom:4px; }
-    .rekap-value { font-size:16px; font-weight:800; color:#4a7c59; }
-    .search-beranda { width:100%; padding:12px 15px; border-radius:12px; border:0; background:rgba(255,255,255,.9); font-size:14px; box-shadow:0 4px 10px rgba(0,0,0,.1); margin-bottom:15px; }
-    .category-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; padding-bottom:30px; }
-    .cat-card { background:rgba(255,255,255,.85); border-radius:14px; padding:15px 8px; text-align:center; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.1); }
-    .cat-card:active { transform:scale(.97); }
-    .cat-icon { font-size:28px; margin-bottom:6px; }
-    .cat-title { font-size:13px; font-weight:700; color:#1e362a; }
-
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(5px); display:none; justify-content:center; align-items:flex-end; z-index:999; }
-    .modal-content { background:#f4f7f5; width:100%; max-width:400px; border-radius:20px 20px 0 0; padding:20px; max-height:85vh; display:flex; flex-direction:column; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #e0e0e0; padding-bottom:10px; }
-    .modal-title { margin:0; font-size:16px; color:#2c4c3b; }
-    .modal-close { background:#e0e0e0; border:0; border-radius:50%; width:30px; height:30px; font-weight:700; color:#555; }
-    .subcat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; overflow-y:auto; padding-bottom:20px; }
-    .subcat-card { background:#fff; border:1px solid #dce0dd; border-radius:12px; padding:15px 10px; text-align:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,.05); }
-    .subcat-card:active { transform:scale(.97); background:#e2ede5; }
-    .subcat-icon { font-size:32px; margin-bottom:8px; }
-    .subcat-name { font-size:12px; font-weight:600; color:#2c4c3b; line-height:1.3; }
-
-    #camera-ui { position:fixed; inset:0; background:#000; z-index:9999; display:none; overflow:hidden; }
-    #kamera-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
-    .kamera-overlay-dark { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; pointer-events:none; }
-    .kamera-top-bar { padding:calc(18px + env(safe-area-inset-top)) 16px 18px; display:flex; align-items:center; background:linear-gradient(to bottom,rgba(0,0,0,.82),rgba(0,0,0,0)); pointer-events:auto; }
-    .back-btn, .torch-btn { background:rgba(255,255,255,.18); backdrop-filter:blur(5px); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:50%; width:42px; height:42px; font-size:19px; display:flex; align-items:center; justify-content:center; }
-    .torch-btn { display:none; }
-    .kamera-title-area { flex:1; text-align:center; color:#fff; }
-    .kamera-title-area h2 { margin:0; font-size:17px; font-weight:650; text-shadow:0 2px 4px rgba(0,0,0,.8); }
-    .kamera-title-area small { display:block; margin-top:4px; opacity:.82; font-size:11px; }
-    .scanner-focus-area { flex:1; display:flex; justify-content:center; align-items:center; position:relative; }
-    .scanner-box { width:min(88vw,360px); aspect-ratio:2.55/1; position:relative; box-shadow:0 0 0 9999px rgba(0,0,0,.58); border-radius:14px; }
-    .scanner-box::after { content:'Posisikan hanya layar angka di dalam kotak'; position:absolute; left:0; right:0; bottom:-28px; color:rgba(255,255,255,.78); font-size:11px; text-align:center; }
-    .bracket { position:absolute; width:34px; height:34px; border-color:#00ff88; border-style:solid; filter:drop-shadow(0 0 4px rgba(0,255,136,.5)); }
-    .b-tl { top:-2px; left:-2px; border-width:4px 0 0 4px; border-top-left-radius:12px; }
-    .b-tr { top:-2px; right:-2px; border-width:4px 4px 0 0; border-top-right-radius:12px; }
-    .b-bl { bottom:-2px; left:-2px; border-width:0 0 4px 4px; border-bottom-left-radius:12px; }
-    .b-br { bottom:-2px; right:-2px; border-width:0 4px 4px 0; border-bottom-right-radius:12px; }
-    .scan-line { width:100%; height:2px; background:rgba(0,255,136,.9); position:absolute; top:0; left:0; box-shadow:0 0 10px #00ff88; animation:scanMove 1.7s infinite ease-in-out; }
-    @keyframes scanMove { 0%{top:8%;opacity:.35} 50%{top:88%;opacity:1} 100%{top:8%;opacity:.35} }
-    .kamera-bottom-panel { background:rgba(0,0,0,.88); border-radius:25px 25px 0 0; padding:20px 20px calc(22px + env(safe-area-inset-bottom)); pointer-events:auto; display:flex; flex-direction:column; align-items:center; min-height:180px; }
-    .kamera-status-info { color:#00ff88; font-size:14px; margin-bottom:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; min-height:22px; text-align:center; }
-    .spinner { width:16px; height:16px; border:2px solid #00ff88; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; flex:0 0 auto; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .scan-source { font-size:10px; color:#9ebaa7; letter-spacing:.04em; margin-bottom:8px; text-transform:uppercase; }
-    .ai-result-display { font-size:45px; font-weight:900; color:#fff; display:none; margin-bottom:12px; }
-    .ai-result-display span { font-size:20px; color:#aaa; font-weight:400; }
-    .scanner-actions { width:100%; max-width:320px; display:flex; flex-direction:column; gap:9px; }
-    .btn-action-main, .btn-action-manual, .btn-action-ai { width:100%; border-radius:28px; padding:14px 18px; cursor:pointer; font-weight:750; }
-    .btn-action-main { background:#fff; color:#111; border:0; display:none; }
-    .btn-action-manual { background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.48); display:none; }
-    .btn-action-ai { background:rgba(0,255,136,.12); color:#b9ffd7; border:1px solid rgba(0,255,136,.45); display:none; }
-    .btn-action-ai[disabled] { opacity:.55; cursor:wait; }
-    .scanner-tip { color:#9da6a0; font-size:10px; line-height:1.35; margin-top:10px; text-align:center; }
-  </style>
+/* Professional green-first visual system inspired by the supplied notice */
+body{background-color:#f2f8f4;background-image:radial-gradient(#dcebe2 1px,transparent 1px);background-size:18px 18px}
+.top{background:linear-gradient(118deg,#075b45 0%,#087b55 58%,#10a875 100%);position:relative;overflow:hidden}
+.top:after{content:"";position:absolute;right:-52px;top:12px;width:190px;height:190px;border:1px solid rgba(255,255,255,.13);border-radius:50%;box-shadow:0 0 0 24px rgba(255,255,255,.045),0 0 0 48px rgba(255,255,255,.035);pointer-events:none}
+.top h1,.top p,.topline{position:relative;z-index:1}
+.content{padding-top:18px}
+#prices .content{padding-top:20px}
+#prices .top h1{font-size:24px}
+#priceList{padding:0;background:transparent;border:0;box-shadow:none}
+.price-category-card{background:#fff;border:1px solid #dcebe2;border-radius:18px;margin:0 0 14px;overflow:hidden;box-shadow:0 8px 24px rgba(11,85,59,.07)}
+.price-category-head{display:flex;align-items:center;gap:11px;padding:15px 14px;background:linear-gradient(110deg,#f0faf4,#fff)}
+.price-category-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:14px;background:#dff5e8;font-size:22px}
+.price-category-title{min-width:0;flex:1}.price-category-title strong{display:block;font-size:14px;color:#173d30}.price-category-title small,.price-category-value small{display:block;font-size:10px;color:#74877d;margin-top:3px}
+.price-category-value{text-align:right;white-space:nowrap}.price-category-value b{font-size:15px;color:#087b55;display:block;font-variant-numeric:tabular-nums}.price-category-value .btn{margin-top:6px;padding:7px 9px}
+.price-subtype-list{padding:2px 14px 4px}
+.price-subtype-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 0;border-top:1px solid #edf3ef}
+.price-subtype-name{display:flex;align-items:center;gap:9px;min-width:0}.price-emoji{width:31px;height:31px;display:grid;place-items:center;background:#f1f8f3;border-radius:10px;font-size:17px;flex:0 0 auto}.price-subtype-name strong{display:block;font-size:12px;color:#29483b;overflow-wrap:anywhere}.price-subtype-name small{display:block;font-size:10px;color:#819087;margin-top:3px}
+.price-subtype-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}.price-subtype-actions b{font-size:11px;color:#087b55;white-space:nowrap;font-variant-numeric:tabular-nums}.price-subtype-actions .btn{padding:7px 8px;border-radius:9px;font-size:10px}
+.price-add-subtype{width:calc(100% - 28px);margin:5px 14px 14px;padding:11px;border:1px dashed #8ac9a7;border-radius:12px;background:#f3fbf6;color:#087b55;font-size:12px;font-weight:800}.price-add-subtype span{font-size:17px;vertical-align:-1px;margin-right:4px}.price-empty{padding:16px 0;text-align:center;color:#829087;font-size:11px}
+@media(max-width:370px){.price-category-head{gap:8px;padding:12px 10px}.price-category-icon{width:36px;height:36px;flex-basis:36px}.price-subtype-actions{gap:4px}.price-subtype-actions .btn{padding:6px 6px;font-size:9px}.price-subtype-actions b{font-size:10px}}
+</style>
 </head>
 <body>
-  <div class="glass-card" id="form-login">
-    <h2>Pengaturan Profil</h2>
-    <div class="form-group">
-      <label>Nama Pegawai (Ketik Nama / Kelurahan)</label>
-      <input type="text" id="input-nama" placeholder="Ketik pencarian..." autocomplete="off">
-      <div id="dropdown-list"></div>
-    </div>
-    <div class="form-group"><label>Unit Kerja</label><input type="text" id="input-unit" placeholder="Otomatis terisi..." readonly></div>
-    <button class="btn-submit" onclick="simpanProfil()">Simpan & Lanjutkan</button>
-  </div>
-
-  <div id="halaman-beranda">
-    <div class="header-beranda">
-      <div class="profile-section"><h2 id="teks-sapa">Halo, Pegawai</h2><p id="teks-unit">📍 Unit Kerja: -</p></div>
-      <div class="rekap-card">
-        <div class="rekap-item"><div class="rekap-label">Total Terkumpul</div><div class="rekap-value" id="teks-total">0 Kg</div></div>
-        <div class="rekap-divider"></div>
-        <div class="rekap-item"><div class="rekap-label">Terakhir Setor</div><div class="rekap-value" id="teks-terakhir" style="color:#6c757d;font-size:14px">Belum ada</div></div>
+<div class="app">
+  <section id="login" class="screen active">
+    <div class="login">
+      <div class="hero"><div class="recycle">♻️</div><h1>Bank Sampah<br>SUKOLILO</h1><p>Sampah Bernilai, Sukolilo Lebih Bersih</p></div>
+      <div class="loginbox">
+        <h2>Masuk ke Aplikasi</h2><p>Kelola bank sampah dengan mudah, transparan, dan terintegrasi.</p>
+        
+        <div class="field"><label>Username E-Sampah</label><input class="input" id="loginName" autocomplete="username" placeholder="Masukkan username"></div>
+        <div class="field"><label>Password</label><input class="input" id="loginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"></div>
+        <div id="loginError" class="small" style="color:#c34238;min-height:18px;margin:6px 0"></div>
+        <button class="btn primary full" id="loginBtn">Masuk ke E-Sampah →</button>
+        <div class="login-note">Satu platform untuk Bank Sampah Kantor, Kelurahan, dan RW se-Kecamatan Sukolilo.</div>
       </div>
     </div>
-    <input type="text" id="search-sampah" class="search-beranda" placeholder="🔍 Cari jenis sampah (misal: Koran)...">
-    <div class="category-grid" id="category-grid">
-      <div class="cat-card" onclick="bukaModal('Kertas & Karton')"><div class="cat-icon">📦</div><div class="cat-title">Kertas & Karton</div></div>
-      <div class="cat-card" onclick="bukaModal('Plastik Botol')"><div class="cat-icon">🍾</div><div class="cat-title">Plastik Botol</div></div>
-      <div class="cat-card" onclick="bukaModal('Lembaran & Kemasan')"><div class="cat-icon">🛍️</div><div class="cat-title">Lembaran & Kemasan</div></div>
-      <div class="cat-card" onclick="bukaModal('Keras, Ember & Tutup')"><div class="cat-icon">🪣</div><div class="cat-title">Keras & Ember</div></div>
-      <div class="cat-card" onclick="bukaModal('Logam & Aluminium')"><div class="cat-icon">⚙️</div><div class="cat-title">Logam & Aluminium</div></div>
-      <div class="cat-card" onclick="bukaModal('Organik & Lainnya')"><div class="cat-icon">🌱</div><div class="cat-title">Organik & Lainnya</div></div>
-    </div>
-  </div>
+  </section>
 
-  <div class="modal-overlay" id="modal-subkategori" onclick="tutupModal(event)">
-    <div class="modal-content">
-      <div class="modal-header"><h3 class="modal-title" id="modal-title">Kategori</h3><button class="modal-close" onclick="tutupModalPaksa()">✕</button></div>
-      <div class="subcat-grid" id="modal-list"></div>
-    </div>
-  </div>
+  <section id="home" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div><div class="row"><span>🔔</span><div class="avatar" id="avatar">PD</div></div></div><h1 id="greeting">Halo, Petugas</h1><p id="roleLine">Petugas Bank Sampah • Unit kerja</p></header>
+    <main class="content">
+      
+      <div class="unit-switch"><span>Unit operasional</span><strong id="activeUnit">Bank Sampah Kantor Kecamatan ▾</strong></div>
+      <div class="section-head"><h2>Ringkasan Hari Ini</h2><span class="small muted">31 Oktober 2026</span></div>
+      <div class="stats">
+        <div class="stat"><div class="ico green">♻</div><strong>24,6 kg</strong><span>Total sampah terkumpul</span></div>
+        <div class="stat"><div class="ico gold">💰</div><strong>Rp125.000</strong><span>Nilai setoran hari ini</span></div>
+        <div class="stat"><div class="ico blue">👥</div><strong>12</strong><span>Nasabah aktif</span></div>
+        <div class="stat"><div class="ico purple">🧾</div><strong>8</strong><span>Transaksi setoran</span></div>
+      </div>
+      <div class="section-head"><h2>Akses Cepat</h2></div>
+      <div class="quick">
+        <button data-go="deposit"><div class="qico">➕</div><strong>Catat Setoran</strong><span>Input sampah nasabah</span></button>
+        <button data-go="customers"><div class="qico">👥</div><strong>Data Nasabah</strong><span>Kelola daftar nasabah</span></button>
+        <button data-go="prices"><div class="qico">🏷️</div><strong>Harga Sampah</strong><span>Harga per jenis</span></button>
+        <button data-go="savings"><div class="qico">👛</div><strong>Tabungan</strong><span>Saldo dan penarikan</span></button>
+        <button data-go="reports"><div class="qico">📊</div><strong>Laporan</strong><span>Rekap dan grafik</span></button>
+        <button data-go="settings"><div class="qico">⚙️</div><strong>Pengaturan</strong><span>Unit dan petugas</span></button>
+      </div>
+      <div class="section-head"><h2>Transaksi Terbaru</h2><button class="small ghost btn" data-go="reports">Lihat semua</button></div>
+      <div class="card" id="recentList"></div>
+    </main>
+  </section>
 
-  <div id="camera-ui">
-    <video id="kamera-video" autoplay playsinline muted></video>
-    <canvas id="canvas-local" style="display:none"></canvas>
-    <canvas id="canvas-ai" style="display:none"></canvas>
-    <div class="kamera-overlay-dark">
-      <div class="kamera-top-bar">
-        <button class="back-btn" onclick="tutupKamera()" aria-label="Tutup kamera">✕</button>
-        <div class="kamera-title-area">
-          <h2 id="cam-title">Membaca timbangan...</h2>
-          <small>Scanner lokal • tanpa memakai kuota AI</small>
+  <section id="deposit" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div><button class="btn ghost" data-go="home">Tutup</button></div><h1>Catat Setoran</h1><p>Input beberapa jenis sampah dalam satu transaksi.</p></header>
+    <main class="content">
+      
+      <div class="card">
+        <div class="field"><label>Cari nasabah</label><input id="customerSearch" class="input" placeholder="Nama atau kode nasabah..."></div>
+        <div id="customerResults"></div>
+        <div id="selectedCustomer" class="unit-switch hide"><span id="customerLabel">Nasabah dipilih</span><button class="small" id="changeCustomer">Ubah</button></div>
+      </div>
+      <div class="section-head"><h2>Pilih Jenis Sampah</h2><span class="small muted">3 kartu per baris</span></div>
+      <div id="wasteGrid" class="waste-grid"></div>
+      <div class="section-head"><h2>Rincian Setoran</h2><button id="clearWaste" class="small danger btn">Hapus pilihan</button></div>
+      <div class="card" id="depositItems"><div class="empty">Pilih jenis sampah dan masukkan beratnya.</div></div>
+      <div class="total"><div class="summaryline"><span>Total berat</span><b id="totalWeight">0 kg</b></div><div class="summaryline"><span>Estimasi nilai setoran</span><strong id="totalValue">Rp0</strong></div></div>
+      <div class="field"><label>Catatan (opsional)</label><textarea id="depositNote" class="input" rows="2" placeholder="Catatan kondisi sampah atau transaksi..."></textarea></div>
+      <button class="btn primary full" id="reviewDeposit">Lanjutkan ke Konfirmasi →</button>
+    </main>
+  </section>
+
+  <section id="confirm" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div><button class="btn ghost" data-go="deposit">Kembali</button></div><h1>Konfirmasi Setoran</h1><p>Periksa kembali rincian sebelum disimpan.</p></header>
+    <main class="content">
+      <div class="card"><span class="pill">Nasabah</span><h2 id="confirmName" style="font-size:17px;margin:10px 0 3px">-</h2><div class="small muted" id="confirmMeta">-</div><div class="summaryline"><span>Kode nasabah</span><b id="confirmCode">-</b></div></div>
+      <div class="section-head"><h2>Rincian Sampah</h2></div><div class="card" id="confirmItems"></div>
+      <div class="total"><div class="summaryline"><span>Total berat</span><b id="confirmWeight">0 kg</b></div><div class="summaryline"><span>Nilai setoran</span><strong id="confirmValue">Rp0</strong></div></div>
+      
+      <button class="btn primary full" id="saveDemo">✓ Simpan Setoran (Preview)</button>
+    </main>
+  </section>
+
+  <section id="customers" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Data Nasabah</h1><p>Nasabah terdaftar pada unit operasional.</p></header>
+    <main class="content">
+      <div class="field"><label>Cari nasabah</label><input class="input" id="customerFilter" placeholder="Cari nama, NIK, atau kode nasabah..."></div>
+      <div class="section-head"><h2>Nasabah Aktif</h2><button class="btn secondary small" id="addCustomer">+ Tambah Nasabah</button></div>
+      <div class="card hide" id="customerFormCard">
+        <h2 style="font-size:15px;margin:0 0 14px">Tambah Nasabah</h2>
+        <div class="field"><label for="newCustomerName">Nama</label><input class="input" id="newCustomerName" autocomplete="name" placeholder="Nama lengkap"></div>
+        <div class="field"><label for="newCustomerNik">NIK</label><input class="input" id="newCustomerNik" inputmode="numeric" maxlength="16" placeholder="16 digit NIK"></div>
+        <div id="nikLookupHint" class="small muted" style="margin:-4px 0 12px"></div>
+        <div class="field"><label for="newCustomerAddress">Alamat</label><textarea class="input" id="newCustomerAddress" rows="3" placeholder="Alamat lengkap"></textarea></div>
+        <button class="btn primary full" id="saveCustomer">Simpan Nasabah</button>
+        <button class="btn ghost full" id="cancelCustomer" style="margin-top:8px">Batal</button>
+        <div id="customerFormFeedback" class="small muted" style="margin-top:9px"></div>
+      </div>
+      <div class="card" id="customerList"></div>
+    </main>
+  </section>
+
+  <section id="prices" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Harga Sampah</h1><p>Harga berlaku pada unit operasional.</p></header>
+    <main class="content"><div class="card" id="priceList"></div><button class="btn primary full" id="editPrices">Kelola Harga Sampah</button></main>
+  </section>
+
+  <section id="savings" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Tabungan Nasabah</h1><p>Saldo, penarikan tunai, dan riwayat mutasi.</p></header>
+    <main class="content">
+      <div class="card"><span class="small muted">Total saldo seluruh nasabah aktif</span><h1 id="savingsTotal" style="font-size:28px;margin:8px 0;color:#087b55">Rp0</h1><span class="pill" id="savingsUnit">Unit operasional aktif</span></div>
+      <div class="section-head"><h2>Catat Penarikan Tunai</h2></div>
+      <div class="card">
+        <div class="field"><label for="withdrawCustomerSearch">Cari nasabah</label><input class="input" id="withdrawCustomerSearch" placeholder="Ketik nama atau kode nasabah..." autocomplete="off"></div>
+        <div id="withdrawCustomerResults"></div>
+        <div id="withdrawSelected" class="hide">
+          <div class="unit-switch"><div><strong id="withdrawCustomerName">Nasabah</strong><small id="withdrawCustomerCode" style="display:block"></small></div><button type="button" class="small" id="withdrawChangeCustomer">Ubah</button></div>
+          <div class="summaryline"><span>Saldo tersedia</span><b id="withdrawBalance">Rp0</b></div>
+          <div class="field"><label for="withdrawAmount">Nominal penarikan (Rp)</label><input class="input" id="withdrawAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Contoh: 50000"></div>
+          <div class="summaryline"><span>Saldo setelah penarikan</span><b id="withdrawAfter">Rp0</b></div>
+          <div class="field"><label for="withdrawNote">Keterangan (opsional)</label><textarea class="input" id="withdrawNote" rows="2" maxlength="300" placeholder="Contoh: Pengambilan tabungan oleh nasabah"></textarea></div>
+          <div class="demo">Pastikan uang tunai sudah benar-benar diserahkan kepada nasabah sebelum pencatatan. Setelah disimpan, saldo langsung berkurang.</div>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:10px 0"><input id="withdrawCashConfirmed" type="checkbox" style="margin-top:2px"> Saya konfirmasi uang tunai sudah diserahkan kepada nasabah.</label>
+          <button class="btn primary full" id="confirmWithdraw" disabled>✓ Simpan Penarikan</button>
+          <div id="withdrawFeedback" class="small muted" style="margin-top:9px"></div>
         </div>
-        <button class="torch-btn" id="btn-torch" onclick="toggleTorch()" aria-label="Lampu kamera">🔦</button>
       </div>
-      <div class="scanner-focus-area">
-        <div class="scanner-box" id="scanner-box">
-          <div class="bracket b-tl"></div><div class="bracket b-tr"></div>
-          <div class="bracket b-bl"></div><div class="bracket b-br"></div>
-          <div class="scan-line" id="scan-line"></div>
-        </div>
-      </div>
-      <div class="kamera-bottom-panel">
-        <div class="scan-source" id="scan-source">LOCAL OCR</div>
-        <div class="kamera-status-info" id="kamera-status"><div class="spinner" id="spinner"></div><span id="status-text">Menyiapkan kamera...</span></div>
-        <div class="ai-result-display" id="ai-result">0.000 <span>Kg</span></div>
-        <div class="scanner-actions">
-          <button class="btn-action-main" id="btn-lanjut" onclick="simpanKeDatabase()">Simpan Berat</button>
-          <button class="btn-action-manual" id="btn-manual" onclick="inputManual()">⌨️ Input Berat Manual</button>
-          <button class="btn-action-ai" id="btn-ai" onclick="mintaBantuanAI()">✨ Bantu Baca dengan AI (1×)</button>
-        </div>
-        <div class="scanner-tip" id="scanner-tip">Tips: dekatkan HP hingga angka memenuhi kotak. Hindari pantulan lampu langsung pada layar.</div>
-      </div>
+      <div class="section-head"><h2>Riwayat Mutasi</h2></div><div class="card" id="savingsHistory"><div class="empty">Memuat riwayat…</div></div>
+    </main>
+  </section>
+
+  <section id="reports" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Dashboard Rekapitulasi</h1><p>Monitoring berdasarkan wilayah dan unit.</p></header>
+    <main class="content"><div class="tabs" id="scopeTabs"><button class="active">Kecamatan</button><button>Kelurahan</button><button>RW</button><button>Kantor</button></div><div class="filterline"><select class="input"><option>Oktober 2026</option><option>September 2026</option></select><select class="input"><option>Semua Unit</option><option>Bank Sampah Kantor</option></select></div><div class="stats" style="margin-top:12px"><div class="stat"><div class="ico green">♻</div><strong>1.245 kg</strong><span>Total sampah</span></div><div class="stat"><div class="ico gold">💰</div><strong>Rp3.125.000</strong><span>Nilai ekonomi</span></div><div class="stat"><div class="ico blue">👥</div><strong>342</strong><span>Jumlah nasabah</span></div><div class="stat"><div class="ico purple">🧩</div><strong>12 jenis</strong><span>Jenis sampah aktif</span></div></div><div class="section-head"><h2>Grafik Setoran Harian (kg)</h2><span class="badge">7 hari</span></div><div class="card"><div class="chart"><div class="barwrap"><div class="bar" style="height:38%"></div><small>25 Okt</small></div><div class="barwrap"><div class="bar" style="height:55%"></div><small>26 Okt</small></div><div class="barwrap"><div class="bar" style="height:68%"></div><small>27 Okt</small></div><div class="barwrap"><div class="bar" style="height:76%"></div><small>28 Okt</small></div><div class="barwrap"><div class="bar" style="height:90%"></div><small>29 Okt</small></div><div class="barwrap"><div class="bar" style="height:48%"></div><small>30 Okt</small></div><div class="barwrap"><div class="bar" style="height:65%"></div><small>31 Okt</small></div></div></div><div class="section-head"><h2>Komposisi Jenis Sampah</h2></div><div class="card"><div class="summaryline"><span>🟦 Plastik</span><b>35%</b></div><div class="summaryline"><span>🟩 Kertas & Kardus</span><b>25%</b></div><div class="summaryline"><span>🟨 Logam</span><b>15%</b></div><div class="summaryline"><span>🟢 Kaca</span><b>10%</b></div><div class="summaryline"><span>⬜ Organik & lainnya</span><b>15%</b></div></div></main>
+  </section>
+
+  <section id="settings" class="screen">
+    <header class="top"><div class="topline"><div class="brand"><div class="brandmark">♻</div><div>Bank Sampah<small>SUKOLILO</small></div></div></div><h1>Pengaturan Unit</h1><p>Profil petugas dan unit bank sampah.</p></header>
+    <main class="content"><div id="accountAdminPanel" class="card hide">
+  <h2 style="font-size:15px;margin:0 0 12px">Manajemen Akun E-Sampah</h2>
+  <p class="small muted">Buat akun E-Sampah untuk pegawai, pengelola, atau warga. Nama diisi langsung dan tidak harus terdaftar di master pegawai.</p>
+  <div class="field"><label>Nama lengkap</label><input class="input" id="accountFullName" autocomplete="name" maxlength="120" placeholder="Masukkan nama lengkap"></div>
+  <div class="field"><label>Peran aplikasi</label><select class="input" id="accountRole"><option value="admin_kelurahan">Admin Kelurahan</option><option value="petugas_rw">Petugas RW</option><option value="pimpinan">Pimpinan</option><option value="admin_kecamatan">Admin Kecamatan</option></select></div>
+  <div class="field"><label>Unit operasional / penugasan</label><select class="input" id="accountUnit"><option value="">Pilih unit</option></select></div>
+  <div class="field"><label>Username E-Sampah</label><input class="input" id="accountUsername" autocomplete="off" placeholder="contoh: petugas_keputih"></div>
+  <div class="field"><label>Password awal (minimal 10 karakter)</label><input class="input" id="accountPassword" type="password" autocomplete="new-password" placeholder="Buat password awal"></div>
+  <button class="btn primary full" id="createAccountBtn">Buat Akun Petugas</button>
+  <div id="accountFeedback" class="small muted" style="margin-top:9px"></div>
+</div>\n      <div class="card"><div class="summaryline"><span>Pengguna</span><b id="settingUser">Petugas Demo</b></div><div class="summaryline"><span>Peran</span><b id="settingRole">Admin Kecamatan</b></div><div class="summaryline"><span>Wilayah pantauan</span><b id="settingScope">Kecamatan Sukolilo</b></div><div class="summaryline"><span>Unit transaksi</span><b id="settingUnit">Bank Sampah Kantor Kecamatan</b></div></div><button class="btn ghost full" id="logoutBtn">Keluar dari Preview</button></main>
+  </section>
+
+  <nav id="bottom" class="bottom hide"><button class="active" data-go="home"><b>⌂</b>Beranda</button><button data-go="deposit"><b>⊕</b>Setoran</button><button data-go="customers"><b>♙</b>Nasabah</button><button data-go="reports"><b>▥</b>Laporan</button><button data-go="settings"><b>☰</b>Lainnya</button></nav>
+  <div class="subtype-overlay" id="subtypeModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,32,26,.55);align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeSubtypeModal()">
+    <div class="subtype-sheet" role="dialog" aria-modal="true" aria-labelledby="subtypeTitle">
+      <div class="subtype-head"><div><h3 id="subtypeTitle">Pilih subjenis sampah</h3><p id="subtypeHint">Pilih jenis yang sesuai dengan sampah yang ditimbang.</p></div><button class="subtype-close" id="closeSubtype" aria-label="Tutup">×</button></div>
+      <div class="subtype-grid" id="subtypeOptions"></div>
     </div>
   </div>
-
-  <script src="data_pegawai.js"></script>
-  <script src="scanner_local.js"></script>
-  <script>
-    const dbSubKategori = {
-      'Kertas & Karton': [ {name:'Koran',icon:'📰'}, {name:'Kertas HVS',icon:'📄'}, {name:'Sak Semen',icon:'🛍️'}, {name:'Kertas Buram',icon:'📜'}, {name:'Majalah',icon:'🖵'}, {name:'Duplek',icon:'📦'} ],
-      'Plastik Botol': [ {name:'PET Putih Bening',icon:'🍾'}, {name:'PET Biru Muda',icon:'🧴'}, {name:'PET Biru/Hijau',icon:'🫙'}, {name:'PET Kotor',icon:'🗑️'}, {name:'PET Minyak',icon:'🛢️'}, {name:'Botol Sirup',icon:'🍷'}, {name:'Botol Kecap',icon:'🍶'}, {name:'Beling Warna',icon:'🍼'} ],
-      'Lembaran & Kemasan': [ {name:'Plastik Bening',icon:'🛍️'}, {name:'Plastik Kresek',icon:'🗑️'}, {name:'Sablon Tipis',icon:'🏷️'}, {name:'Plastik Foil',icon:'🍬'}, {name:'Plastik Karung',icon:'🌾'} ],
-      'Keras, Ember & Tutup': [ {name:'Plastik PS',icon:'🥡'}, {name:'Tutup Galon',icon:'⏺️'}, {name:'Tutup Botol',icon:'🔘'}, {name:'Keping CD',icon:'💿'}, {name:'Bak / Ember',icon:'🪣'}, {name:'Galon / Pipa',icon:'🚰'} ],
-      'Logam & Aluminium': [ {name:'Tembaga',icon:'🟤'}, {name:'Perunggu / Wajan',icon:'🍳'}, {name:'Kuningan',icon:'🔑'}, {name:'Plat Aluminium',icon:'📐'}, {name:'Kaleng / Panci',icon:'🥫'}, {name:'Besi Tebal',icon:'⛓️'} ],
-      'Organik & Lainnya': [ {name:'Minyak Jelantah',icon:'🛢️'}, {name:'Karak / Nasi',icon:'🍚'}, {name:'Sepatu Bekas',icon:'👞'} ]
-    };
-
-    const inputNama = document.getElementById('input-nama');
-    const inputUnit = document.getElementById('input-unit');
-    const dropdownList = document.getElementById('dropdown-list');
-    let streamKamera = null;
-    let localScanner = null;
-    let jenisSampahAktif = '';
-    let beratTerbaca = 0;
-    let beratTeksTerbaca = '';
-    let torchAktif = false;
-    let aiSedangProses = false;
-
-    inputNama.addEventListener('input', function () {
-      const q = this.value.trim().toLowerCase();
-      dropdownList.innerHTML = '';
-      if (!q) { dropdownList.style.display='none'; inputUnit.value=''; return; }
-      const hasil = (typeof dataPegawai !== 'undefined') ? dataPegawai.filter(p => (p.nama||'').toLowerCase().includes(q) || (p.unit||'').toLowerCase().includes(q)) : [];
-      if (!hasil.length) { dropdownList.style.display='none'; return; }
-      dropdownList.style.display='block';
-      hasil.slice(0,15).forEach(p => {
-        const d=document.createElement('div'); d.className='dropdown-item';
-        d.innerHTML=`<div class="item-nama">${p.nama}</div><div class="item-unit">📍 ${p.unit}</div>`;
-        d.onclick=()=>{ inputNama.value=p.nama; inputUnit.value=p.unit; dropdownList.style.display='none'; };
-        dropdownList.appendChild(d);
-      });
-    });
-
-    function getNamaPanggilan(fullName) { const w=(fullName||'').trim().split(/\s+/); return w.length>1?w[1]:w[0]; }
-    function muatDataRekap() {
-      const riwayat=JSON.parse(localStorage.getItem('riwayat_setor')||'[]');
-      const total=riwayat.reduce((s,i)=>s+(Number(i.berat)||0),0);
-      document.getElementById('teks-total').textContent=total.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+' Kg';
-      if (riwayat.length) {
-        const t=new Date(riwayat[riwayat.length-1].waktu);
-        document.getElementById('teks-terakhir').textContent=`${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
-      }
+  <div id="toast" class="toast"></div>
+</div>
+<script>
+/* Load Supabase as an ES module through a same-origin Netlify proxy.
+   The package root is ESM and does not guarantee window.supabase; use its named export. */
+window.__supabaseClientReady = import("/vendor/supabase.mjs")
+  .then((module) => {
+    if (typeof module.createClient !== "function") {
+      throw new Error("Supabase SDK berhasil diunduh, tetapi ekspor createClient tidak ditemukan.");
     }
-    function simpanProfil() {
-      if (!inputNama.value || !inputUnit.value) return alert('Silakan pilih nama dari daftar!');
-      localStorage.setItem('userBankSampah',JSON.stringify({nama:inputNama.value,unit:inputUnit.value}));
-      tampilBeranda(inputNama.value,inputUnit.value);
-    }
-    function tampilBeranda(nama,unit) {
-      document.getElementById('form-login').style.display='none';
-      document.getElementById('halaman-beranda').style.display='block';
-      const p=getNamaPanggilan(nama); document.getElementById('teks-sapa').textContent=`Halo, ${p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()}`;
-      document.getElementById('teks-unit').textContent=`📍 ${unit}`; muatDataRekap();
-    }
-    window.addEventListener('load',()=>{ const s=localStorage.getItem('userBankSampah'); if(s){const u=JSON.parse(s); tampilBeranda(u.nama,u.unit);} });
+    return { createClient: module.createClient };
+  })
+  .catch((error) => {
+    console.error("Supabase SDK gagal dimuat:", error);
+    throw new Error("Pustaka koneksi gagal diinisialisasi (" + (error?.message || "kesalahan modul") + ").");
+  });
+</script>
+<script>
 
-    function bukaModal(kategori) {
-      document.getElementById('modal-title').textContent=kategori;
-      document.getElementById('modal-list').innerHTML=(dbSubKategori[kategori]||[]).map(i=>`<div class="subcat-card" onclick="mulaiKamera('${i.name.replace(/'/g,"\\'")}')"><div class="subcat-icon">${i.icon}</div><div class="subcat-name">${i.name}</div></div>`).join('');
-      document.getElementById('modal-subkategori').style.display='flex';
-    }
-    function tutupModal(e){ if(e.target.id==='modal-subkategori') tutupModalPaksa(); }
-    function tutupModalPaksa(){ document.getElementById('modal-subkategori').style.display='none'; }
+const SUPABASE_URL = "https://dibpprnbcgoxepaljyds.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Yu-89z6Ga_JsYRCePbR6rg_ZBhFA6Qi";
+let supabase = null;
+async function ensureSupabase(){
+ if(supabase)return supabase;
+ const lib=await window.__supabaseClientReady;
+ supabase=lib.createClient(SUPABASE_URL,SUPABASE_KEY);
+ return supabase;
+}
+const fmt = n => "Rp" + Number(n||0).toLocaleString("id-ID");
+const fmtKg = n => Number(n||0).toLocaleString("id-ID",{maximumFractionDigits:3})+" kg";
+const $ = id => document.getElementById(id);
+const toast = msg => { const el=$("toast"); el.textContent=msg; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),3000); };
+const roleNames={admin_kecamatan:"Admin Kecamatan",admin_kelurahan:"Admin Kelurahan",petugas_rw:"Petugas RW",pimpinan:"Pimpinan"};
+const subtypes={
+ pet:[["pet-bening","PET Putih Bening","🍾"],["pet-biru","PET Biru Muda","🧴"],["pet-warna","PET Biru/Hijau","🫙"],["pet-kotor","PET Kotor","🗑️"],["pet-minyak","PET Minyak","🛢️"],["botol-sirup","Botol Sirup","🍶"],["botol-kecap","Botol Kecap","🫙"]],
+ hdpe:[["hdpe-jerigen","Jerigen HDPE","🧴"],["hdpe-botol","Botol HDPE","🧃"],["tutup-galon","Tutup Galon","⏺️"],["tutup-botol","Tutup Botol","🔘"],["ember","Bak / Ember","🪣"],["galon-pipa","Galon / Pipa","🚰"]],
+ campur:[["plastik-bening","Plastik Bening","🛍️"],["kresek","Plastik Kresek","🛍️"],["sablon","Sablon Tipis","🏷️"],["foil","Plastik Foil","🍬"],["karung","Plastik Karung","🌾"],["ps","Plastik PS","🥡"],["cd","Keping CD","💿"]],
+ kertas:[["koran","Koran","📰"],["hvs","Kertas HVS","📄"],["sak-semen","Sak Semen","🛍️"],["buram","Kertas Buram","📜"],["majalah","Majalah","📖"]],
+ kardus:[["kardus-bekas","Kardus Bekas","📦"],["duplek","Duplek","🗂️"]],
+ logam:[["tembaga","Tembaga","🟤"],["perunggu","Perunggu / Wajan","🍳"],["kuningan","Kuningan","🔑"],["aluminium","Plat Aluminium","📐"],["kaleng","Kaleng / Panci","🥫"],["besi","Besi Tebal","⛓️"]],
+ kaca:[["botol-kaca-bening","Botol Kaca Bening","🍾"],["botol-kaca-warna","Botol Kaca Warna","🫙"],["pecahan-kaca","Pecahan Kaca","🔹"]],
+ jelantah:[["jelantah","Minyak Jelantah","🛢️"]],
+ lainnya:[["lainnya-umum","Lainnya (uraian dicatat di catatan)","♻️"]]
+};
+let session=null, profile=null, wasteTypes=[], customers=[], selected={}, draft=[], chosenCustomer=null, activeScreen="home", pendingRequestId=null;
+const categoryKey = name => {
+ const n=(name||"").toLowerCase();
+ if(n.includes("pet")) return "pet";
+  if(n.includes("hdpe")||n.includes("jerigen")) return "hdpe";
+ if(n.includes("campur")) return "campur";
+ if(n.includes("kertas")) return "kertas";
+ if(n.includes("kardus")) return "kardus";
+ if(n.includes("logam")||n.includes("kaleng")) return "logam";
+ if(n.includes("kaca")) return "kaca";
+ if(n.includes("jelantah")) return "jelantah";
+ return "lainnya";
+};
+function go(id){
+ closeSubtypeModal();
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+ $(id)?.classList.add("active");
+ $("bottom").classList.toggle("hide",id==="login"||id==="confirm");
+ document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));
+ activeScreen=id;
+ if(id==="deposit") loadDeposit();
+ if(id==="customers") loadCustomers();
+ if(id==="prices") renderPrices();
+ if(id==="savings") loadSavings();
+ if(id==="reports") loadReports();
+ if(id==="settings") loadAccountAdmin();
+}
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+function showLoginError(msg){$("loginError").textContent=msg||"";}
+async function login(){
+ showLoginError("");
+ const username=$("loginName").value.trim().toLowerCase();
+ const password=$("loginPassword").value;
+ if(!username||!password){showLoginError("Username dan password wajib diisi.");return;}
+ $("loginBtn").disabled=true; $("loginBtn").textContent="Memeriksa akun…";
+ try{
+  await ensureSupabase();
+  const email=username+"@login.esampah.sukolilo.online";
+  const {data,error}=await supabase.auth.signInWithPassword({email,password});
+  if(error) throw error;
+  session=data.session;
+  const {data:me,error:profileError}=await supabase.rpc("esampah_get_my_profile");
+  if(profileError||!me) throw new Error(profileError?.message||"Akun belum ditugaskan ke aplikasi E-Sampah.");
+  profile=me;
+  await loadReferenceData();
+  await loadHome();
+  $("loginPassword").value="";
+  go("home");
+ }catch(err){
+  const message=err?.message||"Login gagal. Periksa koneksi dan username/password.";
+  if(supabase?.auth){try{await supabase.auth.signOut();}catch(signOutError){console.warn("Gagal membersihkan sesi:",signOutError);}}
+  session=null;profile=null;
+  showLoginError(message);
+  console.error("E-Sampah login gagal:",err);
+ }finally{
+  $("loginBtn").disabled=false;$("loginBtn").textContent="Masuk ke E-Sampah →";
+ }
+}
+$("loginBtn").onclick = login;
+$("loginPassword").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();login();}});
+$("loginPassword").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
+async function loadReferenceData(){
+ const {data,error}=await supabase.from("esampah_jenis").select("id,nama,satuan,harga_per_kg,aktif").eq("aktif",true).order("nama");
+ if(error) throw error;
+ wasteTypes=data||[];
+ const {data:subtypePrices,error:subtypePriceError}=await supabase.from("esampah_harga_subjenis").select("id,jenis_id,subjenis_id,nama,harga_per_kg,aktif");
+ if(subtypePriceError)throw subtypePriceError;
+ subtypePriceMap={};inactiveSubtypeMap={};
+ (subtypePrices||[]).forEach(p=>{if(p.aktif)subtypePriceMap[p.jenis_id+":"+p.subjenis_id]=p;else{inactiveSubtypeMap[p.jenis_id]=inactiveSubtypeMap[p.jenis_id]||{};inactiveSubtypeMap[p.jenis_id][p.subjenis_id]=true;}});
+}
+function updateIdentity(){
+ const first=(profile.nama||profile.username||"Petugas").split(" ")[0];
+ $("greeting").textContent="Halo, "+first;
+ $("roleLine").textContent=(roleNames[profile.role]||profile.role)+" • "+(profile.unit_nama||"Unit Bank Sampah");
+ $("avatar").textContent=(profile.nama||"P").slice(0,1).toUpperCase();
+ $("activeUnit").textContent=profile.unit_nama||"Unit operasional";
+ $("settingUser").textContent=profile.nama||profile.username;
+ $("settingRole").textContent=roleNames[profile.role]||profile.role;
+ $("settingScope").textContent=profile.role==="admin_kecamatan"||profile.role==="pimpinan"?"Seluruh Kecamatan Sukolilo":profile.role==="admin_kelurahan"?"Seluruh RW di "+profile.unit_nama:"Unit RW yang ditugaskan";
+ $("settingUnit").textContent=profile.unit_nama;
+ const canWrite=profile.role!=="pimpinan";
+ document.querySelectorAll('[data-go="deposit"]').forEach(el=>el.classList.toggle("hide",!canWrite));
+ $("reviewDeposit").disabled=!canWrite;
+}
+async function loadHome(){
+ updateIdentity();
+ const [{data:tx,error:txErr},{count:customerCount,error:cErr}]=await Promise.all([
+  supabase.from("esampah_transaksi").select("id,berat_kg,total,disetor_at,nasabah:esampah_nasabah(nama)").order("disetor_at",{ascending:false}).limit(1000),
+  supabase.from("esampah_nasabah").select("id",{count:"exact",head:true}).eq("status","aktif").eq("unit_id",profile.unit_id)
+ ]);
+ if(txErr) throw txErr;if(cErr) throw cErr;
+ const rows=tx||[];
+ const today=new Date();today.setHours(0,0,0,0);
+ const todays=rows.filter(x=>new Date(x.disetor_at)>=today);
+ const kg=todays.reduce((s,x)=>s+Number(x.berat_kg||0),0);
+ const money=todays.reduce((s,x)=>s+Number(x.total||0),0);
+ const stat=$("home").querySelectorAll(".stat strong");
+ if(stat.length>=4){stat[0].textContent=fmtKg(kg);stat[1].textContent=fmt(money);stat[2].textContent=String(customerCount||0);stat[3].textContent=String(todays.length);}
+ $("home").querySelector(".section-head .muted").textContent=today.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
+ $("recentList").innerHTML=rows.length?rows.slice(0,8).map(x=>'<div class="listrow recent-row"><div class="person">♻️</div><div class="recent-info"><strong>'+escapeHtml(x.nasabah?.nama||"Nasabah")+'</strong><small>'+new Date(x.disetor_at).toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})+'</small></div><div class="recent-values"><b>'+fmtKg(x.berat_kg)+'</b><small>'+fmt(x.total)+'</small></div></div>').join(""):'<div class="empty">Belum ada transaksi setoran.</div>';
+}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function loadCustomers(){
+ const {data,error}=await supabase.from("esampah_nasabah").select("id,kode_nasabah,nama,nik,alamat,rw,saldo,status,kategori_nasabah,kelurahan(nama)").eq("status","aktif").order("nama").limit(1000);
+ if(error){toast(error.message);return;}
+ customers=data||[];
+ renderCustomers();
+}
+function renderCustomers(){
+ const target=$("customerList");
+ const q=($("customerFilter")?.value||"").trim().toLowerCase();
+ const rows=customers.filter(c=>[c.nama,c.nik,c.kode_nasabah].some(v=>String(v||"").toLowerCase().includes(q)));
+ target.innerHTML=rows.length?rows.map(c=>'<div class="listrow" style="align-items:flex-start"><div class="person">👤</div><div style="flex:1;min-width:0"><strong>'+escapeHtml(c.nama)+'</strong><small>'+escapeHtml(c.kode_nasabah)+' • NIK '+escapeHtml(c.nik||"-")+'</small><small style="display:block">'+escapeHtml(c.alamat||"Alamat belum diisi")+'</small><small>'+escapeHtml(c.kelurahan?.nama||"")+(c.rw?" / RW "+escapeHtml(c.rw):"")+'</small><div id="deleteBox_'+c.id+'" class="hide" style="margin-top:10px;padding:10px;background:#fff5f4;border-radius:12px"><div class="small" style="color:#a63831;margin-bottom:7px">Untuk menonaktifkan nasabah ini, ketik <b>HAPUS</b>. Riwayat transaksi tetap disimpan.</div><input class="input" id="deleteText_'+c.id+'" placeholder="Ketik HAPUS" autocomplete="off"><button class="btn danger full" style="margin-top:7px" data-confirm-delete="'+c.id+'">Konfirmasi Hapus</button></div></div><div class="right"><b>'+fmt(c.saldo)+'</b><small>Saldo</small><button class="btn danger small" style="margin-top:8px" data-toggle-delete="'+c.id+'">Hapus</button></div></div>').join(""):'<div class="empty">Tidak ada nasabah yang cocok dengan pencarian.</div>';
+ document.querySelectorAll("[data-toggle-delete]").forEach(b=>b.onclick=()=>{$("deleteBox_"+b.dataset.toggleDelete).classList.toggle("hide");});
+ document.querySelectorAll("[data-confirm-delete]").forEach(b=>b.onclick=async()=>{
+  const id=b.dataset.confirmDelete,typed=$("deleteText_"+id).value.trim();
+  if(typed!=="HAPUS"){toast("Ketik HAPUS dengan benar untuk melanjutkan.");return;}
+  b.disabled=true;b.textContent="Memproses…";
+  try{
+   const {data,error}=await supabase.rpc("esampah_hapus_nasabah",{p_nasabah_id:id,p_konfirmasi:typed});
+   if(error)throw error;
+   toast("Nasabah dinonaktifkan. Riwayat transaksi tetap aman.");
+   await loadCustomers();
+  }catch(err){toast(err.message||"Gagal menghapus nasabah.");b.disabled=false;b.textContent="Konfirmasi Hapus";}
+ });
+}
+$("customerFilter").addEventListener("input",renderCustomers);
+$("addCustomer").onclick=()=>{$("customerFormCard").classList.toggle("hide");$("customerFormFeedback").textContent="";};
+$("cancelCustomer").onclick=()=>{$("customerFormCard").classList.add("hide");};
+$("newCustomerNik").addEventListener("input",()=>{
+ const nik=$("newCustomerNik").value.replace(/\\D/g,"").slice(0,16);
+ $("newCustomerNik").value=nik;
+ const found=customers.find(x=>x.nik===nik);
+ if(found){
+  $("newCustomerName").value=found.nama||"";
+  $("newCustomerAddress").value=found.alamat||"";
+  $("nikLookupHint").textContent="NIK sudah terdaftar atas nama "+found.nama+". Data ditemukan, tidak perlu membuat nasabah baru.";
+ }else{
+  $("nikLookupHint").textContent=nik.length===16?"NIK belum terdaftar. Silakan lengkapi nama dan alamat.":"Masukkan 16 digit NIK.";
+ }
+});
+$("saveCustomer").onclick=async()=>{
+ const nama=$("newCustomerName").value.trim(),nik=$("newCustomerNik").value.trim(),alamat=$("newCustomerAddress").value.trim();
+ const feedback=$("customerFormFeedback");
+ if(nama.length<2||!/^[0-9]{16}$/.test(nik)||!alamat){feedback.textContent="Lengkapi Nama, NIK 16 digit, dan Alamat.";return;}
+ if(customers.some(x=>x.nik===nik)){feedback.textContent="NIK ini sudah terdaftar. Gunakan data nasabah yang ditemukan, jangan buat duplikat.";return;}
+ const btn=$("saveCustomer");btn.disabled=true;btn.textContent="Menyimpan…";feedback.textContent="";
+ try{
+  const {data,error}=await supabase.rpc("esampah_tambah_nasabah_v2",{p_nama:nama,p_nik:nik,p_alamat:alamat,p_kelurahan_id:profile.kelurahan_id||null,p_rw:profile.rw||null});
+  if(error)throw error;
+  toast("Nasabah berhasil ditambahkan: "+data.kode_nasabah);
+  $("newCustomerName").value="";$("newCustomerNik").value="";$("newCustomerAddress").value="";$("nikLookupHint").textContent="";
+  $("customerFormCard").classList.add("hide");
+  await loadCustomers();
+ }catch(err){feedback.textContent=err.message||"Gagal menambahkan nasabah.";}
+ finally{btn.disabled=false;btn.textContent="Simpan Nasabah";}
+};
+async function loadDeposit(){
+ if(profile.role==="pimpinan")return;
+ if(!wasteTypes.length)await loadReferenceData();
+ const {data,error}=await supabase.from("esampah_nasabah").select("id,kode_nasabah,nama,telepon,alamat,rw,saldo,kategori_nasabah,kelurahan:kelurahan_id(nama)").eq("unit_id",profile.unit_id).eq("status","aktif").order("nama").limit(500);
+ if(error){toast(error.message);return;}
+ customers=data||[];
+ $("customerSearch").value="";
+ $("customerResults").innerHTML="";
+ chosenCustomer=null;selected={};renderWaste();renderItems();
+}
+function renderCustomerOptions(){
+ const q=$("customerSearch").value.toLowerCase().trim();
+ const matches=customers.filter(c=>(c.nama+" "+c.kode_nasabah).toLowerCase().includes(q)).slice(0,20);
+ $("customerResults").innerHTML=matches.length?matches.map(c=>'<button class="listrow" type="button" data-customer="'+c.id+'" style="width:100%;border:0;background:white;text-align:left"><div class="person">👤</div><div><strong>'+escapeHtml(c.nama)+'</strong><small>'+escapeHtml(c.kode_nasabah)+' • Saldo '+fmt(c.saldo)+'</small></div></button>').join(""):(q?'<div class="empty">Nasabah tidak ditemukan.</div>':'<div class="empty">Belum ada nasabah aktif.</div>');
+ document.querySelectorAll("[data-customer]").forEach(b=>b.onclick=()=>chooseCustomer(b.dataset.customer));
+}
+$("customerSearch").addEventListener("focus",renderCustomerOptions);
+$("customerSearch").addEventListener("input",renderCustomerOptions);
+function chooseCustomer(id){
+ chosenCustomer=customers.find(c=>c.id===id);if(!chosenCustomer)return;
+ $("customerLabel").textContent=chosenCustomer.nama+" • "+chosenCustomer.kode_nasabah+" • Saldo "+fmt(chosenCustomer.saldo);
+ $("selectedCustomer").classList.remove("hide");$("customerSearch").classList.add("hide");$("customerResults").innerHTML="";
+}
+$("changeCustomer").onclick=()=>{$("selectedCustomer").classList.add("hide");$("customerSearch").classList.remove("hide");$("customerSearch").value="";chosenCustomer=null;};
+function renderWaste(){
+ $("wasteGrid").innerHTML=wasteTypes.map(w=>{
+  const count=Object.values(selected).filter(x=>x.jenis_id===w.id).length;
+  return '<button class="waste '+(count?'selected':'')+'" data-waste="'+w.id+'">'+(count?'<span class="check">'+count+'</span>':'')+'<span class="wi">'+(categoryKey(w.nama)==="pet"?"🧴":categoryKey(w.nama)==="kertas"?"📦":categoryKey(w.nama)==="logam"?"🥫":categoryKey(w.nama)==="kaca"?"🍾":"♻️")+'</span><strong>'+escapeHtml(w.nama)+'</strong><small>'+(Number(w.harga_per_kg)>0?fmt(w.harga_per_kg)+"/kg":"Harga belum diatur")+'</small></button>';
+ }).join("");
+ document.querySelectorAll("[data-waste]").forEach(b=>b.onclick=()=>openSubtypeModal(b.dataset.waste));
+}
+function openSubtypeModal(typeId){
+ const category=wasteTypes.find(w=>w.id===typeId);if(!category)return;
+ const options=getSubtypesFor(category);
+ $("subtypeTitle").textContent=category.nama;
+ $("subtypeHint").textContent=Number(category.harga_per_kg)>0?"Pilih subjenis sampah. Harga mengikuti kategori "+category.nama+".":"Harga kategori ini belum ditetapkan.";
+ $("subtypeOptions").innerHTML=options.map(([id,name,emoji])=>{const p=subtypePriceMap[typeId+":"+id];const price=Number(p?.harga_per_kg??category.harga_per_kg)||0;return '<button class="subtype-option" type="button" data-subtype="'+id+'"><span class="subtype-emoji">'+emoji+'</span><span><strong>'+escapeHtml(name)+'</strong><small>'+(price>0?fmt(price)+"/kg":"Harga belum diatur")+(p? " • Harga subjenis":" • Harga kategori") +'</small></span></button>';}).join("");
+ document.querySelectorAll("[data-subtype]").forEach(b=>b.onclick=()=>addSubtype(typeId,b.dataset.subtype));
+ $("subtypeModal").style.display="flex";
+}
+function closeSubtypeModal(){$("subtypeModal").style.display="none";}
+$("closeSubtype").onclick=closeSubtypeModal;
+function addSubtype(typeId,subtypeId){
+ const category=wasteTypes.find(w=>w.id===typeId),item=category&&getSubtypesFor(category).find(x=>x[0]===subtypeId);
+ if(!category||!item)return;
+ if(!selected[subtypeId]){const subtypePrice=subtypePriceMap[typeId+":"+subtypeId];selected[subtypeId]={jenis_id:typeId,subjenis_id:subtypeId,subjenis:item[1],name:item[1],emoji:item[2],weight:0,price:Number(subtypePrice?.harga_per_kg??category.harga_per_kg)||0};}
+ closeSubtypeModal();renderWaste();renderItems();
+ const input=document.querySelector('[data-qty="'+subtypeId+'"]');if(input)input.focus();
+}
+function renderItems(){
+ const keys=Object.keys(selected);
+ if(!keys.length){$("depositItems").innerHTML='<div class="empty">Pilih kategori, subjenis, dan masukkan berat.</div>';updateTotal();return;}
+ $("depositItems").innerHTML=keys.map(id=>{
+  const x=selected[id];
+  return '<div class="listrow"><div class="person">'+x.emoji+'</div><div style="flex:1;min-width:0"><strong>'+escapeHtml(x.name)+'</strong><small>'+fmt(x.price)+'/kg</small><div class="qty"><input class="input" type="number" min="0" step="0.001" inputmode="decimal" placeholder="Berat (kg)" value="'+(x.weight||"")+'" data-qty="'+id+'"><span>kg</span></div></div><div class="right"><b>'+fmt(x.weight*x.price)+'</b><button class="small danger btn" data-remove="'+id+'">Hapus</button></div></div>';
+ }).join("");
+ document.querySelectorAll("[data-qty]").forEach(i=>i.oninput=()=>{selected[i.dataset.qty].weight=Math.max(0,Number(i.value)||0);i.closest(".listrow").querySelector(".right b").textContent=fmt(selected[i.dataset.qty].weight*selected[i.dataset.qty].price);updateTotal();});
+ document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{delete selected[b.dataset.remove];renderWaste();renderItems();});
+ updateTotal();
+}
+function totals(){return Object.values(selected).reduce((a,x)=>({weight:a.weight+x.weight,value:a.value+x.weight*x.price}),{weight:0,value:0});}
+function updateTotal(){const t=totals();$("totalWeight").textContent=fmtKg(t.weight);$("totalValue").textContent=fmt(t.value);}
+$("clearWaste").onclick=()=>{selected={};renderWaste();renderItems();};
+$("reviewDeposit").onclick=()=>{
+ if(!chosenCustomer)return toast("Pilih nasabah terlebih dahulu.");
+ const items=Object.values(selected).filter(x=>Number(x.weight)>0);
+ if(!items.length)return toast("Masukkan berat minimal satu subjenis sampah.");
+ const noPrice=items.find(x=>x.price<=0);if(noPrice)return toast("Harga kategori "+noPrice.name+" belum ditetapkan. Hubungi admin.");
+ draft=items.map(x=>({...x,total:Math.round(x.weight*x.price*100)/100}));
+ const t=draft.reduce((a,x)=>({weight:a.weight+x.weight,value:a.value+x.total}),{weight:0,value:0});
+ $("confirmName").textContent=chosenCustomer.nama;
+ $("confirmMeta").textContent=(chosenCustomer.kelurahan?.nama||"")+" "+(chosenCustomer.rw?"• RW "+chosenCustomer.rw:"");
+ $("confirmCode").textContent=chosenCustomer.kode_nasabah;
+ $("confirmItems").innerHTML=draft.map(x=>'<div class="summaryline"><span>'+x.emoji+' '+escapeHtml(x.name)+' · '+fmtKg(x.weight)+'</span><b>'+fmt(x.total)+'</b></div>').join("");
+ $("confirmWeight").textContent=fmtKg(t.weight);$("confirmValue").textContent=fmt(t.value);
+ go("confirm");
+};
+$("saveDemo").textContent="✓ Simpan Setoran";
+$("saveDemo").onclick=async()=>{
+ if(!session||!profile||!chosenCustomer||!draft.length)return toast("Data setoran belum lengkap.");
+ $("saveDemo").disabled=true;$("saveDemo").textContent="Menyimpan…";
+ try{
+  pendingRequestId=pendingRequestId||crypto.randomUUID();
+  const payload=draft.map(x=>({jenis_id:x.jenis_id,subjenis_id:x.subjenis_id,subjenis:x.subjenis,berat_kg:x.weight}));
+  const {data,error}=await supabase.rpc("esampah_catat_setoran",{
+   p_request_id:pendingRequestId,p_nasabah_id:chosenCustomer.id,p_unit_id:profile.unit_id,
+   p_items:payload,p_catatan:$("depositNote").value.trim()||null
+  });
+  if(error)throw error;
+  toast("Setoran tersimpan. Saldo bertambah "+fmt(data.total_nilai)+". Saldo sekarang "+fmt(data.saldo)+".");
+  selected={};draft=[];pendingRequestId=null;chosenCustomer=null;$("selectedCustomer").classList.add("hide");$("customerSearch").classList.remove("hide");$("customerSearch").value="";$("customerResults").innerHTML="";$("depositNote").value="";
+  await loadHome();go("home");
+ }catch(err){toast(err.message||"Gagal menyimpan setoran.");}
+ finally{$("saveDemo").disabled=false;$("saveDemo").textContent="✓ Simpan Setoran";}
+};
+let subtypePriceMap={}, inactiveSubtypeMap={};
+function getSubtypesFor(category){
+ const base=(subtypes[categoryKey(category.nama)]||subtypes.lainnya).slice();
+ const hidden=inactiveSubtypeMap[category.id]||{};
+ const active=Object.values(subtypePriceMap).filter(p=>p.jenis_id===category.id).map(p=>[p.subjenis_id,p.nama,"♻️"]);
+ const merged=new Map(base.map(x=>[x[0],x]));
+ active.forEach(x=>merged.set(x[0],x));
+ return [...merged.values()].filter(x=>!hidden[x[0]]);
+}
+async function renderPrices(){
+ const isAdmin=profile.role==="admin_kecamatan";
+ const {data:prices,error}=await supabase.from("esampah_harga_subjenis").select("id,jenis_id,subjenis_id,nama,harga_per_kg,aktif");
+ if(error){toast("Gagal memuat harga subjenis: "+error.message);return;}
+ subtypePriceMap={};inactiveSubtypeMap={};
+ (prices||[]).forEach(p=>{if(p.aktif)subtypePriceMap[p.jenis_id+":"+p.subjenis_id]=p;else{inactiveSubtypeMap[p.jenis_id]=inactiveSubtypeMap[p.jenis_id]||{};inactiveSubtypeMap[p.jenis_id][p.subjenis_id]=true;}});
+ $("priceList").innerHTML=wasteTypes.map(w=>{
+  const children=getSubtypesFor(w),categoryPrice=Number(w.harga_per_kg)||0;
+  const rows=children.map(([id,name,emoji])=>{
+   const p=subtypePriceMap[w.id+":"+id],price=Number(p?.harga_per_kg??categoryPrice)||0;
+   return '<div class="price-subtype-row"><div class="price-subtype-name"><span class="price-emoji">'+emoji+'</span><div><strong>'+escapeHtml(name)+'</strong><small>'+(p?"Harga khusus":"Harga kategori")+'</small></div></div><div class="price-subtype-actions"><b>'+fmt(price)+'/kg</b>'+(isAdmin?'<button class="btn small secondary" data-subtype-price="'+w.id+'" data-subtype-id="'+id+'" data-subtype-name="'+escapeHtml(name)+'">Ubah</button><button class="btn small danger" data-delete-subtype="'+w.id+'" data-subtype-id="'+id+'" data-subtype-name="'+escapeHtml(name)+'" aria-label="Hapus '+escapeHtml(name)+'">Hapus</button>':'')+'</div></div>';
+  }).join("");
+  return '<article class="price-category-card"><div class="price-category-head"><div class="price-category-icon">♻️</div><div class="price-category-title"><strong>'+escapeHtml(w.nama)+'</strong><small>Harga dasar per '+escapeHtml(w.satuan||"kg")+'</small></div><div class="price-category-value"><b>'+fmt(categoryPrice)+'</b><small>/'+escapeHtml(w.satuan||"kg")+'</small>'+(isAdmin?'<button class="btn small secondary" data-category-price="'+w.id+'">Ubah harga</button>':'')+'</div></div><div class="price-subtype-list">'+(rows||'<div class="price-empty">Belum ada subjenis sampah.</div>')+'</div>'+(isAdmin?'<button class="price-add-subtype" data-add-subtype="'+w.id+'"><span>＋</span> Tambah jenis sampah</button>':'')+'</article>';
+ }).join("")||'<div class="empty">Belum ada jenis sampah.</div>';
+ $("editPrices").classList.toggle("hide",!isAdmin);
+ document.querySelectorAll("[data-category-price]").forEach(btn=>btn.onclick=async()=>{
+  const item=wasteTypes.find(x=>x.id===btn.dataset.categoryPrice);if(!item)return;
+  const raw=prompt("Harga dasar "+item.nama+" per kg (rupiah):",String(item.harga_per_kg||""));
+  if(raw===null)return;
+  const price=Number(raw.trim().replace(/\\./g,"").replace(",","."));
+  if(!Number.isFinite(price)||price<0)return toast("Harga tidak valid.");
+  const {error}=await supabase.rpc("esampah_set_harga",{p_jenis_id:item.id,p_harga:price});
+  if(error)return toast(error.message);
+  await loadReferenceData();await renderPrices();toast("Harga dasar diperbarui.");
+ });
+ document.querySelectorAll("[data-subtype-price]").forEach(btn=>btn.onclick=async()=>{
+  const typeId=btn.dataset.subtypePrice,id=btn.dataset.subtypeId,name=btn.dataset.subtypeName;
+  const current=Number(subtypePriceMap[typeId+":"+id]?.harga_per_kg??wasteTypes.find(w=>w.id===typeId)?.harga_per_kg)||0;
+  const raw=prompt("Harga "+name+" per kg (rupiah):",String(current));if(raw===null)return;
+  const price=Number(raw.trim().replace(/\\./g,"").replace(",","."));
+  if(!Number.isFinite(price)||price<0)return toast("Harga tidak valid.");
+  const {error}=await supabase.rpc("esampah_set_harga_subjenis",{p_jenis_id:typeId,p_subjenis_id:id,p_nama:name,p_harga:price});
+  if(error)return toast(error.message);
+  await loadReferenceData();await renderPrices();toast("Harga "+name+" diperbarui.");
+ });
+ document.querySelectorAll("[data-delete-subtype]").forEach(btn=>btn.onclick=async()=>{
+  const {typeId,id,name}= {typeId:btn.dataset.deleteSubtype,id:btn.dataset.subtypeId,name:btn.dataset.subtypeName};
+  if(!confirm('Hapus subjenis "'+name+'" dari daftar? Riwayat transaksi lama tetap tersimpan.'))return;
+  const {error}=await supabase.rpc("esampah_hapus_subjenis",{p_jenis_id:typeId,p_subjenis_id:id,p_nama:name});
+  if(error)return toast(error.message);
+  await loadReferenceData();await renderPrices();toast(name+" berhasil dihapus dari daftar.");
+ });
+ document.querySelectorAll("[data-add-subtype]").forEach(btn=>btn.onclick=async()=>{
+  const typeId=btn.dataset.addSubtype,category=wasteTypes.find(w=>w.id===typeId);if(!category)return;
+  const name=prompt("Nama subjenis baru untuk kategori "+category.nama+":");if(name===null)return;
+  const clean=name.trim();if(clean.length<2)return toast("Nama subjenis minimal 2 karakter.");
+  const id=clean.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  if(!id)return toast("Nama subjenis tidak valid.");
+  if(getSubtypesFor(category).some(x=>x[0]===id))return toast("Subjenis dengan nama tersebut sudah ada.");
+  const raw=prompt("Harga per kg untuk "+clean+" (rupiah):",String(category.harga_per_kg||0));if(raw===null)return;
+  const price=Number(raw.trim().replace(/\\./g,"").replace(",","."));
+  if(!Number.isFinite(price)||price<0)return toast("Harga tidak valid.");
+  const {error}=await supabase.rpc("esampah_set_harga_subjenis",{p_jenis_id:typeId,p_subjenis_id:id,p_nama:clean,p_harga:price});
+  if(error)return toast(error.message);
+  await loadReferenceData();await renderPrices();toast("Subjenis "+clean+" berhasil ditambahkan.");
+ });
+ $("editPrices").onclick=()=>toast("Gunakan tombol pada setiap kategori untuk mengelola subjenis dan harga.");
+}
 
-    function setStatus(text, showSpinner=true) {
-      document.getElementById('status-text').textContent=text;
-      document.getElementById('spinner').style.display=showSpinner?'block':'none';
-    }
-    function tampilkanFallback(){
-      document.getElementById('btn-manual').style.display='block';
-      document.getElementById('btn-ai').style.display='block';
-    }
-    function sembunyikanFallback(){
-      document.getElementById('btn-manual').style.display='none';
-      document.getElementById('btn-ai').style.display='none';
-    }
+let adminUnits=[];
+async function loadAccountAdmin(){
+ const panel=$("accountAdminPanel");
+ if(profile.role!=="admin_kecamatan"){panel.classList.add("hide");return;}
+ panel.classList.remove("hide");
+ if(adminUnits.length)return;
+ $("accountFeedback").textContent="Memuat daftar unit…";
+ const {data:units,error}=await supabase.from("esampah_unit").select("id,nama,tipe,kelurahan_id,rw").eq("aktif",true).order("nama");
+ if(error){$("accountFeedback").textContent=error.message;return;}
+ adminUnits=units||[];
+ $("accountRole").onchange=renderAccountUnits;
+ renderAccountUnits();
+ $("createAccountBtn").onclick=createStaffAccount;
+ $("accountFeedback").textContent="Isi nama, peran, unit, username, dan password awal.";
+}
+function renderAccountUnits(){
+ const role=$("accountRole").value;
+ const type=role==="admin_kelurahan"?"kelurahan":role==="petugas_rw"?"rw":"kecamatan";
+ const options=adminUnits.filter(u=>u.tipe===type);
+ $("accountUnit").innerHTML='<option value="">Pilih unit</option>'+options.map(u=>'<option value="'+u.id+'">'+escapeHtml(u.nama)+'</option>').join("");
+}
+async function createStaffAccount(){
+ const nama=$("accountFullName").value.trim(),role=$("accountRole").value,unitId=$("accountUnit").value;
+ const username=$("accountUsername").value.trim().toLowerCase(),password=$("accountPassword").value;
+ if(nama.length<2||!unitId||!username||!password){$("accountFeedback").textContent="Nama lengkap, unit, username, dan password wajib diisi.";return;}
+ $("createAccountBtn").disabled=true;$("createAccountBtn").textContent="Membuat akun…";
+ try{
+  const {data,error}=await supabase.functions.invoke("esampah-manage-users",{body:{action:"create",nama,role,unit_id:unitId,username,password}});
+  if(error)throw error;
+  if(data?.error)throw new Error(data.error);
+  $("accountFeedback").textContent="Akun "+data.nama+" berhasil dibuat ("+data.petugas.username+").";
+  $("accountFullName").value="";$("accountUsername").value="";$("accountPassword").value="";
+  toast("Akun E-Sampah berhasil dibuat.");
+ }catch(err){$("accountFeedback").textContent=err.message||"Gagal membuat akun.";}
+ finally{$("createAccountBtn").disabled=false;$("createAccountBtn").textContent="Buat Akun Petugas";}
+}
+let withdrawCustomer=null;
+function updateWithdrawPreview(){
+ const amount=Math.max(0,Number($("withdrawAmount").value)||0);
+ const balance=Number(withdrawCustomer?.saldo||0);
+ $("withdrawAfter").textContent=fmt(Math.max(0,balance-amount));
+ $("withdrawAfter").style.color=amount>balance?"#c34238":"#087b55";
+ if($("confirmWithdraw"))$("confirmWithdraw").disabled=!(amount>0&&amount<=balance&&Number.isInteger(amount)&&$("withdrawCashConfirmed").checked);
+}
+function renderWithdrawCustomerResults(){
+ const q=$("withdrawCustomerSearch").value.trim().toLowerCase();
+ const matches=customers.filter(c=>(c.nama+" "+c.kode_nasabah).toLowerCase().includes(q)).slice(0,12);
+ $("withdrawCustomerResults").innerHTML=matches.length?matches.map(c=>'<button type="button" class="listrow" data-withdraw-customer="'+c.id+'" style="width:100%;border:0;background:white;text-align:left"><div class="person">👤</div><div style="flex:1"><strong>'+escapeHtml(c.nama)+'</strong><small>'+escapeHtml(c.kode_nasabah)+' • Saldo '+fmt(c.saldo)+'</small></div></button>').join(""):(q?'<div class="empty">Nasabah tidak ditemukan.</div>':'<div class="empty">Ketik nama atau kode nasabah untuk mencari.</div>');
+ document.querySelectorAll("[data-withdraw-customer]").forEach(b=>b.onclick=()=>selectWithdrawCustomer(b.dataset.withdrawCustomer));
+}
+function selectWithdrawCustomer(id){
+ withdrawCustomer=customers.find(c=>c.id===id)||null;
+ if(!withdrawCustomer)return;
+ $("withdrawCustomerSearch").value="";
+ $("withdrawCustomerResults").innerHTML="";
+ $("withdrawSelected").classList.remove("hide");
+ $("withdrawCustomerName").textContent=withdrawCustomer.nama;
+ $("withdrawCustomerCode").textContent=withdrawCustomer.kode_nasabah;
+ $("withdrawBalance").textContent=fmt(withdrawCustomer.saldo);
+ $("withdrawAmount").value="";
+ $("withdrawNote").value="";
+ $("withdrawCashConfirmed").checked=false;
+ $("withdrawFeedback").textContent="";
+ updateWithdrawPreview();
+}
+function clearWithdrawCustomer(){
+ withdrawCustomer=null;
+ $("withdrawSelected").classList.add("hide");
+ $("withdrawCustomerSearch").value="";
+ $("withdrawCustomerResults").innerHTML="";
+ $("withdrawAmount").value="";
+ $("withdrawNote").value="";
+ if($("withdrawCashConfirmed"))$("withdrawCashConfirmed").checked=false;
+}
+$("withdrawCustomerSearch").addEventListener("focus",renderWithdrawCustomerResults);
+$("withdrawCustomerSearch").addEventListener("input",renderWithdrawCustomerResults);
+$("withdrawChangeCustomer").onclick=clearWithdrawCustomer;
+$("withdrawAmount").addEventListener("input",updateWithdrawPreview);
+$("withdrawCashConfirmed").addEventListener("change",updateWithdrawPreview);
+$("confirmWithdraw").onclick=async()=>{
+ if(!withdrawCustomer)return toast("Pilih nasabah terlebih dahulu.");
+ const amount=Number($("withdrawAmount").value);
+ if(!Number.isFinite(amount)||amount<=0||!Number.isInteger(amount))return toast("Masukkan nominal penarikan berupa angka rupiah bulat yang lebih dari nol.");
+ if(amount>Number(withdrawCustomer.saldo||0))return toast("Nominal melebihi saldo nasabah.");
+ if(!$("withdrawCashConfirmed").checked)return toast("Konfirmasi penyerahan uang tunai terlebih dahulu.");
+ const btn=$("confirmWithdraw");btn.disabled=true;btn.textContent="Menyimpan penarikan…";
+ try{
+  const {data,error}=await supabase.rpc("esampah_catat_penarikan",{
+   p_request_id:crypto.randomUUID(),p_nasabah_id:withdrawCustomer.id,p_unit_id:profile.unit_id,
+   p_nominal:amount,p_keterangan:$("withdrawNote").value.trim()||null
+  });
+  if(error)throw error;
+  toast("Penarikan tercatat. Saldo tersisa "+fmt(data.saldo)+".");
+  clearWithdrawCustomer();
+  await loadCustomers();
+  await loadHome();
+  await loadSavings();
+ }catch(err){$("withdrawFeedback").textContent=err.message||"Gagal menyimpan penarikan.";toast(err.message||"Gagal menyimpan penarikan.");}
+ finally{btn.disabled=false;btn.textContent="✓ Uang Tunai Sudah Diserahkan — Simpan";}
+};
+async function loadSavings(){
+ const [{data,error},{data:customerRows,error:customerError}]=await Promise.all([
+  supabase.from("esampah_mutasi").select("id,tipe,nominal,saldo_setelah,keterangan,created_at,nasabah:esampah_nasabah(nama,kode_nasabah)").order("created_at",{ascending:false}).limit(100),
+  supabase.from("esampah_nasabah").select("id,kode_nasabah,nama,saldo,status,nik,alamat,rw,kategori_nasabah,kelurahan(nama)").eq("status","aktif").order("nama").limit(1000)
+ ]);
+ if(error||customerError){toast(error?.message||customerError?.message||"Gagal memuat tabungan.");return;}
+ customers=customerRows||[];
+ $("savingsTotal").textContent=fmt(customers.reduce((sum,c)=>sum+Number(c.saldo||0),0));
+ $("savingsUnit").textContent=profile.unit_nama||"Unit aktif";
+ if(!withdrawCustomer||!customers.some(c=>c.id===withdrawCustomer.id))clearWithdrawCustomer();
+ const rows=data||[];
+ $("savingsHistory").innerHTML=rows.length?rows.map(x=>'<div class="listrow"><div class="person">'+(x.tipe==="setoran"?"♻️":"💸")+'</div><div style="flex:1;min-width:0"><strong>'+escapeHtml(x.nasabah?.nama||"Nasabah")+'</strong><small>'+escapeHtml(x.keterangan||x.tipe)+' • '+new Date(x.created_at).toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})+'</small><small>Saldo setelah transaksi: '+fmt(x.saldo_setelah)+'</small></div><div class="right"><b style="color:'+(x.tipe==="setoran"?"#078254":"#c34238")+'">'+(x.tipe==="setoran"?"+":"−")+fmt(x.nominal)+'</b></div></div>').join(""):'<div class="empty">Belum ada riwayat mutasi.</div>';
+}
+async function loadReports(){
+ const {data,error}=await supabase.from("esampah_transaksi").select("id,berat_kg,total,status,disetor_at,jenis:esampah_jenis(nama)").order("disetor_at",{ascending:false}).limit(1000);
+ if(error){toast(error.message);return;}
+ const rows=data||[],kg=rows.reduce((s,x)=>s+Number(x.berat_kg),0),money=rows.reduce((s,x)=>s+Number(x.total),0);
+ const stats=$("reports").querySelectorAll(".stat strong");
+ const {count:customerCount}=await supabase.from("esampah_nasabah").select("id",{count:"exact",head:true});
+ if(stats.length>=4){stats[0].textContent=fmtKg(kg);stats[1].textContent=fmt(money);stats[2].textContent=String(customerCount||0);stats[3].textContent=String(wasteTypes.length);}
+ $("reports").querySelector(".chart").innerHTML='<div class="empty">Grafik akan terbentuk setelah transaksi mulai dicatat.</div>';
+ const comp=$("reports").querySelectorAll(".card")[1];
+ if(comp)comp.innerHTML=rows.length?'<div class="summaryline"><span>Transaksi tercatat</span><b>'+rows.length+'</b></div><div class="summaryline"><span>Total berat</span><b>'+fmtKg(kg)+'</b></div><div class="summaryline"><span>Total nilai</span><b>'+fmt(money)+'</b></div>':'<div class="empty">Belum ada transaksi untuk direkap.</div>';
+}
+$("logoutBtn").onclick=async()=>{await supabase.auth.signOut();session=null;profile=null;customers=[];wasteTypes=[];go("login");};
 
-    async function mulaiKamera(namaSampah) {
-      tutupModalPaksa();
-      jenisSampahAktif=namaSampah; beratTerbaca=0; beratTeksTerbaca=''; torchAktif=false;
-      document.getElementById('camera-ui').style.display='block';
-      document.getElementById('cam-title').textContent=`Menimbang ${namaSampah}`;
-      document.getElementById('ai-result').style.display='none';
-      document.getElementById('btn-lanjut').style.display='none';
-      document.getElementById('scan-line').style.display='block';
-      document.getElementById('scan-source').textContent='LOCAL OCR';
-      sembunyikanFallback(); setStatus('Menyiapkan kamera…');
+async function restoreSession(){
+ try{ await ensureSupabase(); }catch(err){ showLoginError(err.message||"Koneksi aplikasi belum siap. Muat ulang halaman."); return; }
+ const {data}=await supabase.auth.getSession();
+ if(!data.session)return;
+ session=data.session;
+ const {data:me,error}=await supabase.rpc("esampah_get_my_profile");
+ if(error||!me){await supabase.auth.signOut();return;}
+ profile=me;await loadReferenceData();await loadHome();go("home");
+}
+$("subtypeModal").addEventListener("click",e=>{if(e.target===$("subtypeModal"))closeSubtypeModal();});
+restoreSession();
 
-      try {
-        streamKamera=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:false});
-        const video=document.getElementById('kamera-video'); video.srcObject=streamKamera; await video.play();
-        const track=streamKamera.getVideoTracks()[0];
-        const caps=track.getCapabilities?track.getCapabilities():{};
-        try {
-          if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
-        } catch (_) {}
-        document.getElementById('btn-torch').style.display=caps.torch?'flex':'none';
-
-        localScanner=new ScaleLocalScanner({
-          video,
-          scannerBox:document.getElementById('scanner-box'),
-          workCanvas:document.getElementById('canvas-local'),
-          onStatus:(text)=>setStatus(text,true),
-          onFallback:()=>tampilkanFallback(),
-          onReading:(text)=>suksesScan(text,'lokal')
-        });
-        localScanner.start();
-      } catch (err) {
-        console.error(err); setStatus('Kamera tidak dapat diakses. Silakan input berat manual.',false); tampilkanFallback();
-        document.getElementById('btn-ai').style.display='none';
-      }
-    }
-
-    async function toggleTorch(){
-      if(!streamKamera) return;
-      const track=streamKamera.getVideoTracks()[0]; const caps=track.getCapabilities?track.getCapabilities():{};
-      if(!caps.torch) return;
-      torchAktif=!torchAktif;
-      try { await track.applyConstraints({advanced:[{torch:torchAktif}]}); document.getElementById('btn-torch').style.background=torchAktif?'rgba(255,220,80,.35)':'rgba(255,255,255,.18)'; } catch(_) { torchAktif=false; }
-    }
-
-    function suksesScan(nilaiTeks,sumber='lokal') {
-      if(localScanner) localScanner.stop();
-      const normalized=String(nilaiTeks).trim().replace(',','.');
-      const numeric=Number(normalized);
-      if(!Number.isFinite(numeric)||numeric<=0) return;
-      beratTeksTerbaca=normalized; beratTerbaca=numeric;
-      document.getElementById('scan-line').style.display='none';
-      document.getElementById('scan-source').textContent=sumber==='lokal'?'LOCAL OCR • TERVERIFIKASI':sumber==='manual'?'INPUT MANUAL':'GEMINI FALLBACK';
-      setStatus(sumber==='lokal'?'Berhasil dibaca lokal ✓':sumber==='manual'?'Berat berhasil diinput manual.':'Berhasil dibaca dengan bantuan AI.',false);
-      const result=document.getElementById('ai-result'); result.innerHTML=`${beratTeksTerbaca} <span>Kg</span>`; result.style.display='block';
-      sembunyikanFallback(); document.getElementById('btn-lanjut').style.display='block';
-    }
-
-    async function mintaBantuanAI(){
-      if(aiSedangProses) return;
-      if(!localScanner) return setStatus('Scanner belum siap. Gunakan input manual.',false);
-      const base64=localScanner.captureBase64(720,.9);
-      if(!base64) return setStatus('Belum bisa mengambil gambar layar. Coba lagi.',false);
-      aiSedangProses=true; const btn=document.getElementById('btn-ai'); btn.disabled=true; btn.textContent='✨ AI sedang membaca…';
-      document.getElementById('scan-source').textContent='GEMINI FALLBACK • 1 REQUEST'; setStatus('Mengirim crop layar timbangan ke AI…',true);
-      try {
-        const response=await fetch('/.netlify/functions/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:base64})});
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok || data.error){
-          const status=data.status||response.status;
-          if(status===429) setStatus('Kuota AI sedang penuh. Scanner lokal tetap aktif atau gunakan input manual.',false);
-          else setStatus('AI belum berhasil membaca. Scanner lokal tetap aktif atau gunakan input manual.',false);
-          if(localScanner) localScanner.start();
-          return;
-        }
-        const text=data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
-        const match=text.match(/\d+(?:[.,]\d+)?/);
-        if(match && Number(match[0].replace(',','.'))>0) suksesScan(match[0].replace(',','.'),'AI');
-        else { setStatus('AI tidak yakin pada angkanya. Gunakan scanner lokal atau input manual.',false); if(localScanner)localScanner.start(); }
-      } catch(err){ console.error(err); setStatus('Koneksi AI bermasalah. Scanner lokal tetap bisa digunakan.',false); if(localScanner)localScanner.start(); }
-      finally { aiSedangProses=false; btn.disabled=false; btn.textContent='✨ Bantu Baca dengan AI (1×)'; tampilkanFallback(); }
-    }
-
-    function inputManual(){
-      const manual=prompt(`Masukkan berat ${jenisSampahAktif} dalam Kg. Contoh: 0,260 atau 2,5.`,'0,000');
-      if(manual===null) return;
-      const raw=String(manual).trim().replace(',','.');
-      if(!/^\d+(?:\.\d{1,3})?$/.test(raw) || Number(raw)<=0) return alert('Berat tidak valid. Masukkan angka > 0 dengan maksimal 3 angka desimal.');
-      suksesScan(raw,'manual');
-    }
-
-    function tutupKamera(){
-      if(localScanner){localScanner.stop(); localScanner=null;}
-      if(streamKamera){streamKamera.getTracks().forEach(t=>t.stop()); streamKamera=null;}
-      document.getElementById('camera-ui').style.display='none';
-      document.getElementById('btn-torch').style.display='none';
-    }
-    function simpanKeDatabase(){
-      const riwayat=JSON.parse(localStorage.getItem('riwayat_setor')||'[]');
-      riwayat.push({jenis:jenisSampahAktif,berat:beratTerbaca,berat_tampilan:beratTeksTerbaca,waktu:new Date().toISOString()});
-      localStorage.setItem('riwayat_setor',JSON.stringify(riwayat)); tutupKamera(); muatDataRekap();
-    }
-  </script>
+</script>
 </body>
 </html>

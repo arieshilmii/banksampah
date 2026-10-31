@@ -1,2 +1,1 @@
-[build]
-  functions = "netlify/functions"
+# Static mobile-first application. No Netlify Functions are required.
