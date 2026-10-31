@@ -115,7 +115,7 @@
   </section>
 
   <nav id="bottom" class="bottom hide"><button class="active" data-go="home"><b>⌂</b>Beranda</button><button data-go="deposit"><b>⊕</b>Setoran</button><button data-go="customers"><b>♙</b>Nasabah</button><button data-go="reports"><b>▥</b>Laporan</button><button data-go="settings"><b>☰</b>Lainnya</button></nav>
-  <div class="subtype-overlay" id="subtypeModal" onclick="if(event.target===this)closeSubtypeModal()">
+  <div class="subtype-overlay" id="subtypeModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,32,26,.55);align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeSubtypeModal()">
     <div class="subtype-sheet" role="dialog" aria-modal="true" aria-labelledby="subtypeTitle">
       <div class="subtype-head"><div><h3 id="subtypeTitle">Pilih subjenis sampah</h3><p id="subtypeHint">Pilih jenis yang sesuai dengan sampah yang ditimbang.</p></div><button class="subtype-close" id="closeSubtype" aria-label="Tutup">×</button></div>
       <div class="subtype-grid" id="subtypeOptions"></div>
@@ -288,11 +288,22 @@ const wastes=[
  {id:"kertas",name:"Kertas",emoji:"📦",price:3000},{id:"kardus",name:"Kardus",emoji:"🗃️",price:2500},{id:"logam",name:"Logam",emoji:"🥫",price:15000},
  {id:"kaca",name:"Kaca",emoji:"🍾",price:1000},{id:"organik",name:"Organik",emoji:"🌱",price:500},{id:"lainnya",name:"Lainnya",emoji:"♻️",price:0}
 ];
+const subtypes={
+ pet:[["pet-bening","PET Putih Bening","🍾"],["pet-biru","PET Biru Muda","🧴"],["pet-warna","PET Biru/Hijau","🫙"],["pet-kotor","PET Kotor","🗑️"],["pet-minyak","PET Minyak","🛢️"],["botol-sirup","Botol Sirup","🍶"],["botol-kecap","Botol Kecap","🫙"]],
+ hdpe:[["hdpe-jerigen","Jerigen HDPE","🧴"],["hdpe-botol","Botol HDPE","🧃"],["tutup-galon","Tutup Galon","⏺️"],["tutup-botol","Tutup Botol","🔘"],["ember","Bak / Ember","🪣"],["galon-pipa","Galon / Pipa","🚰"]],
+ campur:[["plastik-bening","Plastik Bening","🛍️"],["kresek","Plastik Kresek","🛍️"],["sablon","Sablon Tipis","🏷️"],["foil","Plastik Foil","🍬"],["karung","Plastik Karung","🌾"],["ps","Plastik PS","🥡"],["cd","Keping CD","💿"]],
+ kertas:[["koran","Koran","📰"],["hvs","Kertas HVS","📄"],["sak-semen","Sak Semen","🛍️"],["buram","Kertas Buram","📜"],["majalah","Majalah","📖"]],
+ kardus:[["kardus-bekas","Kardus Bekas","📦"],["duplek","Duplek","🗂️"]],
+ logam:[["tembaga","Tembaga","🟤"],["perunggu","Perunggu / Wajan","🍳"],["kuningan","Kuningan","🔑"],["aluminium","Plat Aluminium","📐"],["kaleng","Kaleng / Panci","🥫"],["besi","Besi Tebal","⛓️"]],
+ kaca:[["botol-kaca-bening","Botol Kaca Bening","🍾"],["botol-kaca-warna","Botol Kaca Warna","🫙"],["pecahan-kaca","Pecahan Kaca","🔹"]],
+ organik:[["jelantah","Minyak Jelantah","🛢️"],["karak","Karak / Nasi","🍚"]],
+ lainnya:[["sepatu","Sepatu Bekas","👞"],["lainnya-umum","Lainnya (uraian dicatat di catatan)","♻️"]]
+};
 let role="kecamatan",unit="Kecamatan Sukolilo",chosenCustomer=null,selected={},draft=[];
 const fmt=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
 const toast=msg=>{const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2600)};
 const roleNames={kecamatan:"Admin Kecamatan",kelurahan:"Admin Kelurahan",rw:"Petugas RW",pimpinan:"Pimpinan"};
-function go(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.getElementById("bottom").classList.toggle("hide",id==="login"||id==="confirm");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="deposit")renderWaste();if(id==="customers")renderCustomers();if(id==="prices")renderPrices();}
+function go(id){closeSubtypeModal();document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.getElementById("bottom").classList.toggle("hide",id==="login"||id==="confirm");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="deposit")renderWaste();if(id==="customers")renderCustomers();if(id==="prices")renderPrices();}
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 document.querySelectorAll(".login-role button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".login-role button").forEach(x=>x.classList.remove("active"));b.classList.add("active");role=b.dataset.role;const sel=document.getElementById("loginUnit");sel.innerHTML=role==="rw"?'<option>RW 02 Medokan Semampir</option>':role==="kelurahan"?'<option>Kelurahan Keputih</option>':role==="pimpinan"?'<option>Kecamatan Sukolilo</option>':'<option>Kecamatan Sukolilo</option>'; }));
 document.getElementById("loginBtn").onclick=()=>{unit=document.getElementById("loginUnit").value;const name=document.getElementById("loginName").value||"Petugas Demo";document.getElementById("greeting").textContent="Halo, "+name.split(" ")[0];document.getElementById("roleLine").textContent=roleNames[role]+" • "+unit;document.getElementById("avatar").textContent=name.slice(0,1).toUpperCase();document.getElementById("activeUnit").textContent=role==="rw"?"Bank Sampah "+unit:"Bank Sampah Kantor "+(role==="kelurahan"?unit:"Kecamatan Sukolilo");document.getElementById("settingUser").textContent=name;document.getElementById("settingRole").textContent=roleNames[role];document.getElementById("settingScope").textContent=role==="rw"?unit:role==="kelurahan"?"Seluruh RW di "+unit:"Seluruh Kecamatan Sukolilo";document.getElementById("settingUnit").textContent=document.getElementById("activeUnit").textContent;go("home");};
@@ -306,9 +317,9 @@ function openSubtypeModal(categoryId){
  const options=subtypes[categoryId]||[];
  document.getElementById("subtypeOptions").innerHTML=options.map(([id,name,emoji])=>'<button class="subtype-option" type="button" data-subtype="'+id+'"><span class="subtype-emoji">'+emoji+'</span><span><strong>'+name+'</strong><small>'+ (category.price?fmt(category.price)+"/kg (harga contoh kategori)":"Harga belum diatur")+'</small></span></button>').join("")||'<div class="subtype-empty">Belum ada subjenis untuk kategori ini.</div>';
  document.querySelectorAll("[data-subtype]").forEach(btn=>btn.onclick=()=>addSubtype(categoryId,btn.dataset.subtype));
- document.getElementById("subtypeModal").classList.add("open");
+ document.getElementById("subtypeModal").style.display="flex";
 }
-function closeSubtypeModal(){document.getElementById("subtypeModal").classList.remove("open")}
+function closeSubtypeModal(){document.getElementById("subtypeModal").style.display="none"}
 document.getElementById("closeSubtype").onclick=closeSubtypeModal;
 function addSubtype(categoryId,subtypeId){
  const category=wastes.find(w=>w.id===categoryId),item=(subtypes[categoryId]||[]).find(x=>x[0]===subtypeId);
